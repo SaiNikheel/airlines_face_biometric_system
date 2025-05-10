@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration - Jazeera Airways</title>
+    <link rel="icon" type="image/webp" href="https://static2.jazeeraairways.com/media/sadnkiax/optimised-j9-website-logo.webp">
+    <style>
+        /* --- Core Styles --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        :root {
+            --primary: #004C7A;
+            --primary-light: #00A8E8;
+            --primary-dark: #00396B;
+            --secondary: #2E2E2E;
+            --accent: #FFC20E;
+            --success: #1B998B;
+            --light: #f5f5f5;
+            --dark: #1A1A1A;
+            --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+            --success-gradient: linear-gradient(135deg, #159957, #1B998B);
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --shadow-hover: 0 10px 20px rgba(0, 0, 0, 0.2);
+            --border-radius: 16px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 300;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: url('https://images.unsplash.com/photo-1600385589996-d95671b36810?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') center/cover fixed;
+            color: var(--secondary);
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(30, 30, 50, 0.8);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            position: relative;
+            border-top: 4px solid var(--primary);
+            overflow: hidden;
+        }
+
+        /* --- Airport Check-in Theme --- */
+        .check-in-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--gradient);
+            z-index: 1;
+        }
+
+        .luggage-tag {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 120px;
+            height: 60px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 14px;
+            transform: rotate(5deg);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            padding: 5px;
+        }
+
+        .luggage-tag::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            width: 30px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        .luggage-tag .tag-code {
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .luggage-tag .tag-name {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        /* --- Typography --- */
+        h1 {
+            color: var(--primary);
+            margin: 0 0 30px 0;
+            font-weight: 600;
+            display: block;
+            position: relative;
+            clear: both;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        /* --- Form Elements --- */
+        .form-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border: 1px solid rgba(0, 76, 122, 0.1);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .form-section:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--primary-dark);
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--primary-light);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.1);
+        }
+
+        button {
+            background: var(--gradient);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+        }
+
+        button:hover {
+            background-position: right center;
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        button i {
+            margin-right: 8px;
+        }
+
+        /* --- Video & Capture Elements --- */
+        #video-container {
+            width: 100%;
+            max-width: 640px;
+            margin: 30px auto;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            background: var(--dark);
+            transition: all 0.3s ease;
+        }
+
+        #video {
+            width: 100%;
+            display: block;
+        }
+
+        #capture-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: var(--accent);
+            color: var(--dark);
+            transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        #capture-btn:hover {
+            transform: translateX(-50%) translateY(-5px);
+        }
+
+        #capture-btn:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        #capture-btn:disabled {
+            background: #6c757d;
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: translateX(-50%);
+            box-shadow: none;
+        }
+
+        .face-guide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .face-oval {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 250px;
+            border: 2px dashed var(--primary-light);
+            border-radius: 50%;
+            box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.3);
+        }
+
+        .proximity-dots {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 350px;
+            pointer-events: none;
+        }
+
+        .dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-light);
+            border-radius: 50%;
+            opacity: 0.7;
+        }
+
+        .proximity-message {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            display: none;
+            backdrop-filter: blur(5px);
+        }
+
+        .capture-instructions {
+            text-align: center;
+            margin: 15px 0 30px;
+            color: var(--secondary);
+            font-size: 14px;
+            background: rgba(0, 168, 232, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .capture-instructions i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+
+        #captured-image {
+            display: none;
+            width: 100%;
+            max-width: 640px;
+            margin: 20px auto;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            transition: all 0.5s ease;
+        }
+
+        /* --- Result Message --- */
+        #result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .error {
+            background: linear-gradient(135deg, #FE5858, #EE9617);
+            color: white;
+        }
+
+        /* --- Navigation --- */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 25px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 10px 0;
+        }
+
+        .back-link i {
+            margin-right: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: var(--primary-light);
+        }
+
+        .back-link:hover i {
+            transform: translateX(-3px);
+        }
+
+        /* --- Decorative Elements --- */
+        .decorative-icon {
+            position: absolute;
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .plane-icon {
+            bottom: 5%;
+            right: 10%;
+            width: 200px;
+            height: 200px;
+            background: url('https://www.svgrepo.com/show/13636/plane.svg') center/contain no-repeat;
+            transform: rotate(15deg);
+        }
+
+        .cloud-icon {
+            top: 15%;
+            left: 5%;
+            width: 150px;
+            height: 150px;
+            background: url('https://www.svgrepo.com/show/76178/cloud.svg') center/contain no-repeat;
+        }
+
+        /* --- Progress Bar --- */
+        .progress-container {
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50px;
+            padding: 5px;
+            position: relative;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-number {
+            background: var(--primary);
+            color: white;
+        }
+
+        .step-label {
+            font-size: 12px;
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            height: 2px;
+            background: var(--primary);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Media Queries --- */
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem;
+                padding: 1.5rem;
+                width: auto;
+                max-width: none;
+                border-radius: 10px;
+            }
+            
+            .luggage-tag {
+                width: 100px;
+                height: 50px;
+                font-size: 12px;
+                top: 10px;
+                right: 10px;
+            }
+            
+            .luggage-tag .tag-code {
+                font-size: 16px;
+            }
+            
+            .form-section {
+                padding: 20px 15px;
+                margin-bottom: 20px;
+            }
+            
+            input, select {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            button {
+                width: 100%;
+                padding: 12px 15px;
+            }
+            
+            #video-container {
+                height: 320px !important;
+                max-height: 60vh !important;
+            }
+            
+            #video {
+                max-height: 100%;
+                width: auto;
+                max-width: 100%;
+                object-fit: contain;
+            }
+            
+            #face-guide {
+                width: 200px;
+                height: 200px;
+            }
+            
+            #capture-btn {
+                bottom: 15px;
+                width: 80%;
+                max-width: 250px;
+                padding: 12px 15px;
+                font-size: 15px;
+            }
+            
+            .progress-indicator {
+                position: relative;
+                margin-top: 20px;
+                margin-bottom: 30px;
+                transform: scale(0.9);
+                padding: 0 5px;
+            }
+            
+            .logo {
+                height: 40px;
+            }
+            
+            .logo-container {
+                padding: 15px 0;
+                margin-bottom: 15px;
+            }
+            
+            .top-container {
+                margin-top: 20px;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .back-link {
+                margin-bottom: 15px;
+                padding: 8px 15px;
+                font-size: 14px;
+                align-self: flex-start;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+                margin-bottom: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                margin: 0;
+                padding: 1rem;
+                border-radius: 0;
+                min-height: 100vh;
+                box-sizing: border-box;
+            }
+            
+            .luggage-tag {
+                width: 90px;
+                height: 45px;
+                font-size: 11px;
+            }
+            
+            .luggage-tag .tag-code {
+                font-size: 14px;
+            }
+            
+            .form-section {
+                padding: 15px 10px;
+            }
+            
+            label {
+                font-size: 13px;
+            }
+            
+            input, select {
+                padding: 8px;
+                font-size: 13px;
+            }
+            
+            #video-container {
+                height: 280px !important;
+                max-height: 50vh !important;
+            }
+            
+            #face-guide {
+                width: 180px;
+                height: 180px;
+            }
+            
+            #capture-btn {
+                width: 90%;
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .back-link {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+            
+            h1 {
+                font-size: 1.4rem;
+            }
+            
+            .progress-indicator {
+                transform: scale(0.8);
+                margin: 15px 0 25px 0;
+            }
+            
+            .form-group {
+                margin-bottom: 15px;
+            }
+            
+            button {
+                padding: 10px;
+                font-size: 14px;
+            }
+        }
+
+        /* --- Logo Styles --- */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(0, 76, 122, 0.1);
+        }
+
+        .logo {
+            height: 50px;
+            width: auto;
+            transition: var(--transition);
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img src="https://static2.jazeeraairways.com/media/sadnkiax/optimised-j9-website-logo.webp" alt="Jazeera Airways" class="logo">
+        </div>
+        <div class="check-in-banner"></div>
+        <div class="luggage-tag">
+            <div class="tag-code">Biometric</div>
+            <div class="tag-name">PASSENGER REGISTRATION</div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <a href="/" class="back-link"><i class="fas fa-chevron-left"></i> Back to Welcome</a>
+            <h1>Passenger Registration</h1>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-steps">
+                <div class="step active">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Face Capture</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Details</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Confirmation</div>
+                </div>
+            </div>
+            <div class="progress-bar" style="width: 0%"></div>
+        </div>
+        
+        <div class="form-section">
+            <div id="video-container">
+                <video id="video" autoplay playsinline></video>
+                <div class="face-guide">
+                    <div class="face-oval"></div>
+                    <div class="proximity-dots">
+                        <!-- Dots will be added dynamically -->
+                    </div>
+                    <div class="proximity-message">Position your face in the oval</div>
+                </div>
+                <button id="capture-btn"><i class="fas fa-camera"></i> Capture Photo</button>
+            </div>
+            <p class="capture-instructions"><i class="fas fa-info-circle"></i> Position your face within the oval guide. Make sure your entire face is visible and well-lit.</p>
+            <img id="captured-image" alt="Captured photo">
+            <div id="image-controls" style="text-align: center; margin: 15px 0; display: none;">
+                <button id="retry-btn" type="button" style="background: #6c757d; margin-right: 10px;"><i class="fas fa-redo"></i> Retake Photo</button>
+            </div>
+            
+            <form id="registrationForm">
+                <div class="form-group">
+                    <label for="full_name">Full Name:</label>
+                    <input type="text" id="full_name" name="full_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="dob">Date of Birth:</label>
+                    <input type="date" id="dob" name="dob" required>
+                </div>
+                <div class="form-group">
+                    <label for="passport_id">Passport ID:</label>
+                    <input type="text" id="passport_id" name="passport_id" required>
+                </div>
+                <div class="form-group">
+                    <label for="flight_id">Flight ID:</label>
+                    <input type="text" id="flight_id" name="flight_id" required>
+                </div>
+                <button type="submit"><i class="fas fa-paper-plane"></i> Register</button>
+            </form>
+        </div>
+
+        <div id="result"></div>
+        
+        <div class="decorative-icon plane-icon"></div>
+        <div class="decorative-icon cloud-icon"></div>
+    </div>
+
+    <script>
+        // Access the webcam
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('capture-btn');
+        const capturedImage = document.getElementById('captured-image');
+        const resultDiv = document.getElementById('result');
+        const proximityMessage = document.querySelector('.proximity-message');
+        const progressBar = document.querySelector('.progress-bar');
+        const steps = document.querySelectorAll('.step');
+
+        // Function to log important debugging information
+        function logDebugInfo(message, data) {
+            console.log(`%c${message}`, 'background: #004C7A; color: white; padding: 2px 5px; border-radius: 3px;', data);
+        }
+
+        // Function to test if the server supports the payload format
+        // This helps identify the exact expected format
+        async function testServerCompatibility(originalPayload) {
+            // Create variations of payload to test what the server accepts
+            const variations = [
+                { 
+                    name: "Original Payload",
+                    payload: originalPayload 
+                },
+                { 
+                    name: "With Image URI Prefix",
+                    payload: {
+                        ...originalPayload,
+                        face_image: `data:image/jpeg;base64,${originalPayload.face_image}`
+                    }
+                },
+                { 
+                    name: "Form Data Format",
+                    test: async () => {
+                        const formData = new FormData();
+                        Object.entries(originalPayload).forEach(([key, value]) => {
+                            formData.append(key, value);
+                        });
+                        
+                        return fetch('/register', {
+                            method: 'POST',
+                            body: formData
+                        });
+                    }
+                },
+                // Additional format variations
+                { 
+                    name: "Alternate Field Names",
+                    payload: {
+                        name: originalPayload.full_name,
+                        date_of_birth: originalPayload.dob,
+                        passport: originalPayload.passport_id,
+                        flight: originalPayload.flight_id,
+                        image: originalPayload.face_image
+                    }
+                },
+                {
+                    name: "Nested User Object",
+                    payload: {
+                        user: {
+                            full_name: originalPayload.full_name,
+                            dob: originalPayload.dob,
+                            passport_id: originalPayload.passport_id,
+                            flight_id: originalPayload.flight_id
+                        },
+                        face_image: originalPayload.face_image
+                    }
+                },
+                {
+                    name: "Different Image Format",
+                    payload: {
+                        ...originalPayload,
+                        face_image: `data:image/jpeg;base64,${originalPayload.face_image}`
+                    }
+                },
+                {
+                    name: "Stringified JSON Inside FormData",
+                    test: async () => {
+                        const formData = new FormData();
+                        formData.append('data', JSON.stringify(originalPayload));
+                        
+                        return fetch('/register', {
+                            method: 'POST',
+                            body: formData
+                        });
+                    }
+                }
+            ];
+            
+            // Only test in development/debug mode - skip for production
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                logDebugInfo("Running server compatibility tests", null);
+                
+                // Also try alternate endpoints
+                const endpoints = [
+                    '/register',
+                    '/api/register',
+                    '/face/register', 
+                    '/user/register',
+                    '/passengers/register',
+                    '/registration'
+                ];
+                
+                // Try each endpoint with each variation
+                for (const endpoint of endpoints) {
+                    for (const variation of variations) {
+                        try {
+                            let response;
+                            
+                            if (variation.test) {
+                                response = await variation.test();
+                            } else {
+                                response = await fetch(endpoint, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify(variation.payload)
+                                });
+                            }
+                            
+                            const status = response.status;
+                            logDebugInfo(`Endpoint: ${endpoint}, Test "${variation.name}" result:`, status);
+                            
+                            // If we got a success, remember this format for future use
+                            if (status === 200 || status === 201) {
+                                logDebugInfo("Found working payload format and endpoint!", { format: variation.name, endpoint });
+                                localStorage.setItem('workingPayloadFormat', variation.name);
+                                localStorage.setItem('workingEndpoint', endpoint);
+                                return true;
+                            }
+                        } catch (error) {
+                            logDebugInfo(`Endpoint: ${endpoint}, Test "${variation.name}" error:`, error.message);
+                        }
+                    }
+                }
+                
+                logDebugInfo("All payload format tests failed", null);
+                return false;
+            }
+            
+            return false;
+        }
+
+        // Create proximity dots
+        function createProximityDots() {
+            const dotsContainer = document.querySelector('.proximity-dots');
+            const dotPositions = [
+                { top: '0%', left: '50%' },
+                { top: '50%', left: '0%' },
+                { top: '50%', left: '100%' },
+                { top: '100%', left: '50%' }
+            ];
+
+            dotPositions.forEach(pos => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.style.top = pos.top;
+                dot.style.left = pos.left;
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        // Check face position and proximity
+        function checkFacePosition() {
+            // Enable the capture button by default since we can't use the FaceDetector API
+            captureBtn.disabled = false;
+            proximityMessage.style.display = 'none';
+            
+            // Note: The FaceDetector API is experimental and not widely supported
+            // We've disabled the automatic face detection to ensure compatibility
+            // Users should manually ensure their face is positioned correctly
+        }
+
+        // Start the webcam
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                video.srcObject = stream;
+                createProximityDots();
+                
+                // Check if device is mobile to adjust video settings
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                if (isMobile) {
+                    // On mobile, we may need different camera settings
+                    video.style.objectFit = 'cover';
+                }
+                
+                // Show a message to guide the user instead of automatic detection
+                proximityMessage.textContent = 'Position your face in the oval';
+                proximityMessage.style.display = 'block';
+                setTimeout(() => {
+                    proximityMessage.style.display = 'none';
+                }, 3000);
+            } catch (err) {
+                console.error("Error accessing webcam:", err);
+                alert("Error accessing webcam. Please make sure you have granted camera permissions.");
+            }
+        }
+
+        // Capture photo
+        captureBtn.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            
+            // Use higher resolution for better quality
+            const maxWidth = 640;  // Increased from 320
+            const maxHeight = 480; // Increased from 240
+            
+            let width = videoWidth;
+            let height = videoHeight;
+            
+            // Resize while maintaining aspect ratio
+            if (width > maxWidth || height > maxHeight) {
+                if (width / height > maxWidth / maxHeight) {
+                    width = maxWidth;
+                    height = Math.round(videoHeight * (maxWidth / videoWidth));
+                } else {
+                    height = maxHeight;
+                    width = Math.round(videoWidth * (maxHeight / videoHeight));
+                }
+            }
+            
+            // Set canvas dimensions
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Enable image smoothing for better quality
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            
+            // Draw the video frame to the canvas with the new dimensions
+            ctx.drawImage(video, 0, 0, width, height);
+            
+            // Convert to base64 with better quality
+            const imageData = canvas.toDataURL('image/jpeg', 0.85); // Increased quality from 0.5 to 0.85
+            
+            console.log("Captured image dimensions:", width, "x", height);
+            console.log("Estimated image size in bytes:", Math.round(imageData.length * 0.75));
+            
+            capturedImage.src = imageData;
+            
+            // Show the captured image
+            video.style.display = 'none';
+            capturedImage.style.display = 'block';
+            captureBtn.style.display = 'none';
+            proximityMessage.style.display = 'none';
+            
+            // Show image controls (retry button)
+            document.getElementById('image-controls').style.display = 'block';
+            
+            // Update progress
+            steps[0].classList.add('active');
+            steps[1].classList.add('active');
+            progressBar.style.width = '50%';
+        });
+        
+        // Retry photo capture
+        document.getElementById('retry-btn').addEventListener('click', () => {
+            // Reset to camera mode
+            video.style.display = 'block';
+            capturedImage.style.display = 'none';
+            captureBtn.style.display = 'block';
+            document.getElementById('image-controls').style.display = 'none';
+            
+            // Reset progress
+            steps[1].classList.remove('active');
+            progressBar.style.width = '20%';
+        });
+
+        // Handle form submission
+        document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Check if an image has been captured
+            if (capturedImage.style.display !== 'block') {
+                alert('Please capture a photo before submitting the form.');
+                return;
+            }
+            
+            // Update progress
+            steps[2].classList.add('active');
+            progressBar.style.width = '100%';
+            
+            // Show loading indicator
+            resultDiv.style.display = 'block';
+            resultDiv.className = '';
+            resultDiv.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary);"></i>
+                    <p>Processing registration...</p>
+                </div>
+            `;
+            
+            try {
+                // STEP 1: Get face embedding from the server
+                console.log("Getting face embedding from server");
+                
+                // Send the image to get the face embedding
+                const embeddingResponse = await fetch('/get_face_embedding', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image: capturedImage.src
+                    })
+                });
+                
+                if (!embeddingResponse.ok) {
+                    const errorText = await embeddingResponse.text();
+                    throw new Error(`Failed to get face embedding: ${embeddingResponse.status} - ${errorText}`);
+                }
+                
+                const embeddingData = await embeddingResponse.json();
+                if (!embeddingData.embedding) {
+                    throw new Error('No face embedding returned from server');
+                }
+                
+                console.log("Successfully received face embedding");
+                
+                // STEP 2: Submit registration with the embedding
+                const formData = new FormData(e.target);
+                
+                // Add the embedding to the form data
+                formData.append('face_embedding', JSON.stringify(embeddingData.embedding));
+                
+                // Submit the registration form
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                // Process the response
+                let data;
+                const responseText = await response.text();
+                try {
+                    data = JSON.parse(responseText);
+                } catch (error) {
+                    console.log("Response is not JSON:", responseText);
+                    data = { error: "Unable to parse server response" };
+                }
+                
+                // Display result
+                resultDiv.style.display = 'block';
+                
+                if (response.ok) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <h3><i class="fas fa-check-circle"></i> Registration Successful!</h3>
+                        <p>${data.message || 'Your face has been registered successfully.'}</p>
+                    `;
+                    e.target.reset();
+                    
+                    // Reset the capture UI
+                    setTimeout(() => {
+                        video.style.display = 'block';
+                        capturedImage.style.display = 'none';
+                        captureBtn.style.display = 'block';
+                        document.getElementById('image-controls').style.display = 'none';
+                        
+                        // Reset progress
+                        steps.forEach((step, index) => {
+                            if (index > 0) step.classList.remove('active');
+                        });
+                        progressBar.style.width = '0%';
+                    }, 2000);
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `
+                        <h3><i class="fas fa-exclamation-triangle"></i> Registration Failed</h3>
+                        <p>${data.error || 'An error occurred during registration.'}</p>
+                        <p>Status: ${response.status}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <h3><i class="fas fa-exclamation-triangle"></i> Error</h3>
+                    <p>An unexpected error occurred. Please try again later.</p>
+                    <p>Details: ${error.message}</p>
+                `;
+            }
+        });
+
+        // Start the webcam when page loads
+        startCamera();
+    </script>
+</body>
+</html> 

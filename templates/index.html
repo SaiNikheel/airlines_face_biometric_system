@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jazeera Airways - Passenger Registration System</title>
+    <link rel="icon" type="image/webp" href="https://static2.jazeeraairways.com/media/sadnkiax/optimised-j9-website-logo.webp">
+    <style>
+        /* --- Core Styles --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Roboto+Mono:wght@500&display=swap');
+
+        :root {
+            --primary: #004C7A;
+            --primary-light: #00A8E8;
+            --secondary: #2E2E2E;
+            --accent: #FFC20E;
+            --dark: #1A1A1A;
+            --light: #f5f5f5;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --error: #F44336;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --shadow-hover: 0 10px 20px rgba(0, 0, 0, 0.2);
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 300;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: url('https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') center/cover fixed;
+            color: var(--secondary);
+            position: relative;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(20, 20, 35, 0.85);
+            z-index: -1;
+        }
+
+        /* --- Layout & Container --- */
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            position: relative;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(120deg, var(--primary), var(--dark));
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .dashboard-header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .clock {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1.2rem;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+        }
+
+        .clock i {
+            margin-right: 8px;
+        }
+
+        .dashboard-body {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        /* --- Flight Board --- */
+        .flight-board {
+            background: var(--dark);
+            color: #FFD454;
+            padding: 15px;
+            border-radius: var(--border-radius-sm);
+            font-family: 'Roboto Mono', monospace;
+            margin-bottom: 30px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: var(--shadow);
+        }
+
+        .board-title {
+            font-size: 12px;
+            color: #fff;
+            background: var(--accent);
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 30px;
+            margin-bottom: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        .flight-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            animation: flickerText 10s infinite;
+        }
+
+        .flight-row:last-child {
+            border-bottom: none;
+        }
+
+        .status {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .on-time {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: var(--success);
+        }
+
+        .delayed {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: var(--warning);
+        }
+
+        .cancelled {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: var(--error);
+        }
+
+        /* --- Cards --- */
+        .card {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: var(--border-radius-sm);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border-top: 4px solid var(--primary);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 20px;
+        }
+
+        .card-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .card-body {
+            flex: 1;
+        }
+
+        .form-section {
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--primary);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: var(--border-radius-sm);
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--primary-light);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: var(--shadow);
+            width: 100%;
+            justify-content: center;
+        }
+
+        button:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+        }
+
+        button i {
+            margin-right: 8px;
+        }
+
+        /* --- Result Area --- */
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: var(--border-radius-sm);
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .success {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.2));
+            border-left: 4px solid var(--success);
+            color: #2E7D32;
+        }
+
+        .error {
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.2));
+            border-left: 4px solid var(--error);
+            color: #C62828;
+        }
+
+        /* --- Animated Elements --- */
+        .runway {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .runway-lights {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 100%;
+        }
+
+        .runway-light {
+            width: 20px;
+            height: 4px;
+            background: var(--accent);
+            margin-top: 13px;
+            animation: blink 2s infinite;
+        }
+
+        .plane-animation {
+            position: absolute;
+            font-size: 24px;
+            color: white;
+            animation: flyPlane 20s linear infinite;
+            opacity: 0.7;
+            z-index: 10;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes flyPlane {
+            0% { left: -50px; top: 100px; }
+            100% { left: calc(100% + 50px); top: 50px; }
+        }
+
+        @keyframes flickerText {
+            0%, 100% { opacity: 1; }
+            98% { opacity: 1; }
+            99% { opacity: 0.8; }
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem;
+                padding-bottom: 1rem;
+                width: auto;
+                max-width: none;
+                border-radius: 10px;
+            }
+            
+            .dashboard-header {
+                padding: 20px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .clock {
+                margin-top: 10px;
+                font-size: 1rem;
+            }
+            
+            .dashboard-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .dashboard-body {
+                padding: 20px;
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .flight-board {
+                padding: 12px;
+                margin-bottom: 20px;
+                font-size: 12px;
+            }
+            
+            .flight-row {
+                flex-direction: column;
+                padding: 10px 0;
+            }
+            
+            .flight-row > div {
+                margin-bottom: 5px;
+            }
+            
+            .flight-row > div:last-child {
+                align-self: flex-end;
+            }
+            
+            .card {
+                padding: 20px 15px;
+            }
+            
+            .card-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .card-title {
+                font-size: 16px;
+            }
+            
+            form input, form select {
+                padding: 10px;
+                font-size: 14px;
+                margin-bottom: 15px;
+            }
+            
+            .form-group {
+                margin-bottom: 15px;
+            }
+            
+            .submit-btn {
+                padding: 12px 15px;
+                width: 100%;
+            }
+            
+            .logo {
+                height: 40px;
+            }
+            
+            .logo-container {
+                padding: 15px 0;
+                margin-bottom: 15px;
+            }
+            
+            #results {
+                padding: 15px;
+            }
+            
+            .runway {
+                height: 3px;
+            }
+            
+            .runway-light {
+                width: 6px;
+                height: 6px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            
+            .dashboard-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .clock {
+                font-size: 0.9rem;
+            }
+            
+            .dashboard-body {
+                padding: 15px;
+                gap: 15px;
+            }
+            
+            .card {
+                padding: 15px 12px;
+            }
+            
+            .card-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+                margin-right: 10px;
+            }
+            
+            .card-title {
+                font-size: 15px;
+            }
+            
+            .flight-board {
+                padding: 10px;
+                font-size: 11px;
+            }
+            
+            .board-title {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+            
+            form input, form select {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+            
+            label {
+                font-size: 13px;
+            }
+            
+            .submit-btn {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .status {
+                padding: 2px 6px;
+                font-size: 10px;
+            }
+            
+            h2 {
+                font-size: 18px;
+            }
+            
+            .runway {
+                height: 2px;
+            }
+            
+            .runway-light {
+                width: 4px;
+                height: 4px;
+            }
+        }
+
+        /* --- Logo Styles --- */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(0, 76, 122, 0.1);
+        }
+
+        .logo {
+            height: 50px;
+            width: auto;
+            transition: var(--transition);
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img src="https://static2.jazeeraairways.com/media/sadnkiax/optimised-j9-website-logo.webp" alt="Jazeera Airways" class="logo">
+        </div>
+        <div class="dashboard-header">
+            <h1><i class="fas fa-plane"></i> Passenger Registration System</h1>
+            <div class="clock"><i class="far fa-clock"></i> <span id="time">00:00:00</span></div>
+        </div>
+
+        <div class="flight-board">
+            <span class="board-title">Live Flight Status</span>
+            <div class="flight-rows">
+                <div class="flight-row">
+                    <span class="flight">LH2030</span>
+                    <span class="destination">BERLIN</span>
+                    <span class="status delayed">Delayed</span>
+                </div>
+                <div class="flight-row">
+                    <span class="flight">BA2491</span>
+                    <span class="destination">LONDON</span>
+                    <span class="status on-time">On Time</span>
+                </div>
+                <div class="flight-row">
+                    <span class="flight">AF1680</span>
+                    <span class="destination">PARIS</span>
+                    <span class="status on-time">On Time</span>
+                </div>
+                <div class="flight-row">
+                    <span class="flight">AA8017</span>
+                    <span class="destination">NEW YORK</span>
+                    <span class="status cancelled">Cancelled</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-body">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h2 class="card-title">Passenger Registration</h2>
+                </div>
+                <div class="card-body">
+                    <form id="registrationForm">
+                        <div class="form-group">
+                            <label for="full_name">Full Name:</label>
+                            <input type="text" id="full_name" name="full_name" placeholder="Enter full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="dob">Date of Birth:</label>
+                            <input type="date" id="dob" name="dob" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="passport_id">Passport ID:</label>
+                            <input type="text" id="passport_id" name="passport_id" placeholder="Enter passport ID" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="flight_id">Flight ID:</label>
+                            <input type="text" id="flight_id" name="flight_id" placeholder="Enter flight ID" required>
+                        </div>
+                        <button type="submit"><i class="fas fa-paper-plane"></i> Register Passenger</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-id-card"></i>
+                    </div>
+                    <h2 class="card-title">Passenger Verification</h2>
+                </div>
+                <div class="card-body">
+                    <form id="verificationForm">
+                        <div class="form-group">
+                            <label for="verify_passport_id">Passport ID:</label>
+                            <input type="text" id="verify_passport_id" name="passport_id" placeholder="Enter passport ID to verify" required>
+                        </div>
+                        <button type="submit"><i class="fas fa-search"></i> Verify Passenger</button>
+                    </form>
+                    
+                    <div class="cta-buttons" style="margin-top: 30px; text-align: center;">
+                        <p>Use our advanced biometric verification:</p>
+                        <a href="/verify" style="display: inline-block; background: linear-gradient(135deg, var(--accent), #FF5722); color: white; padding: 12px 20px; border-radius: 30px; text-decoration: none; font-weight: 500; box-shadow: var(--shadow); margin-top: 10px; transition: all 0.3s ease;">
+                            <i class="fas fa-fingerprint"></i> Face Verification
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="result"></div>
+        
+        <div class="runway">
+            <div class="runway-lights">
+                <div class="runway-light" style="animation-delay: 0.2s;"></div>
+                <div class="runway-light" style="animation-delay: 0.4s;"></div>
+                <div class="runway-light" style="animation-delay: 0.6s;"></div>
+                <div class="runway-light" style="animation-delay: 0.8s;"></div>
+                <div class="runway-light" style="animation-delay: 1.0s;"></div>
+                <div class="runway-light" style="animation-delay: 1.2s;"></div>
+                <div class="runway-light" style="animation-delay: 1.4s;"></div>
+                <div class="runway-light" style="animation-delay: 1.6s;"></div>
+                <div class="runway-light" style="animation-delay: 1.8s;"></div>
+            </div>
+        </div>
+        
+        <div class="plane-animation">
+            <i class="fas fa-plane"></i>
+        </div>
+    </div>
+
+    <script>
+        // Update clock
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('time').textContent = timeStr;
+        }
+        
+        setInterval(updateClock, 1000);
+        updateClock();
+        
+        // Handle registration form submission
+        document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const formObject = {};
+            
+            // Convert FormData to a plain object
+            formData.forEach((value, key) => {
+                formObject[key] = value;
+            });
+            
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formObject)
+                });
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                
+                if (response.ok) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <h3><i class="fas fa-check-circle"></i> Registration Successful</h3>
+                        <p>${data.message}</p>
+                    `;
+                    e.target.reset();
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `
+                        <h3><i class="fas fa-exclamation-triangle"></i> Registration Failed</h3>
+                        <p>${data.error || 'An error occurred during registration.'}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <h3><i class="fas fa-exclamation-triangle"></i> Error</h3>
+                    <p>An unexpected error occurred. Please try again later.</p>
+                    <p>Details: ${error.message}</p>
+                `;
+            }
+        });
+
+        // Handle verification form submission
+        document.getElementById('verificationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const passportId = formData.get('passport_id');
+            
+            try {
+                const response = await fetch('/verify_by_passport', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ passport_id: passportId })
+                });
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                
+                if (response.ok) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <h3><i class="fas fa-check-circle"></i> Passenger Verified</h3>
+                        <div style="margin-top: 15px; background: rgba(255, 255, 255, 0.6); padding: 15px; border-radius: 8px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                                <div style="flex: 1; min-width: 200px;">
+                                    <p><strong>Full Name:</strong> ${data.full_name}</p>
+                                    <p><strong>Date of Birth:</strong> ${data.dob}</p>
+                                </div>
+                                <div style="flex: 1; min-width: 200px;">
+                                    <p><strong>Passport ID:</strong> ${data.passport_id}</p>
+                                    <p><strong>Flight ID:</strong> ${data.flight_id}</p>
+                                </div>
+                            </div>
+                            <p style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.1);">
+                                <strong>Registration Date:</strong> ${data.registration_date || 'Not available'}
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `
+                        <h3><i class="fas fa-exclamation-triangle"></i> Verification Failed</h3>
+                        <p>${data.error || 'Could not verify passenger with the provided passport ID.'}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <h3><i class="fas fa-exclamation-triangle"></i> Error</h3>
+                    <p>An unexpected error occurred. Please try again later.</p>
+                    <p>Details: ${error.message}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html> 

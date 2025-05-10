@@ -1,0 +1,36 @@
+.vercel
+
+# Virtual Environment
+tfenv/
+venv/
+env/
+
+# Large files
+*.dylib
+*.so
+*.sh
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Sensitive files
+client_secret.json
+flask_session/
+Miniforge3-MacOSX-arm64.sh

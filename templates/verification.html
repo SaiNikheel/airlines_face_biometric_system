@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification - Jazeera Airways</title>
+    <link rel="icon" type="image/webp" href="https://static2.jazeeraairways.com/media/sadnkiax/optimised-j9-website-logo.webp">
+    <style>
+        /* --- 1. CORE STYLES & THEME --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        :root {
+          --primary: #004C7A;
+          --primary-light: #00A8E8;
+          --secondary: #2E2E2E;
+          --accent: #FFC20E;
+          --light: #f5f5f5;
+          --dark: #1A1A1A;
+          --gradient: linear-gradient(135deg, var(--primary), var(--primary-light));
+          --gradient-reverse: linear-gradient(315deg, var(--primary), var(--primary-light));
+          --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          --shadow-hover: 0 10px 20px rgba(0, 0, 0, 0.2);
+          --border-radius: 16px;
+          --transition: all 0.3s ease;
+        }
+
+        body {
+          font-family: 'Poppins', sans-serif;
+          font-weight: 300;
+          line-height: 1.6;
+          margin: 0;
+          padding: 0;
+          background: url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') fixed;
+          background-size: cover;
+          color: var(--secondary);
+          position: relative;
+          overflow-x: hidden;
+        }
+
+        body::before {
+          content: '';
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(30, 30, 50, 0.85);
+          z-index: -1;
+        }
+
+        h1, h2, h3 {
+          font-weight: 600;
+          color: var(--primary-light);
+          margin-top: 0;
+        }
+
+        .container {
+          max-width: 800px;
+          margin: 2rem auto;
+          background: rgba(255, 255, 255, 0.95);
+          padding: 2.5rem;
+          border-radius: var(--border-radius);
+          box-shadow: var(--shadow);
+          backdrop-filter: blur(10px);
+          border-top: 4px solid var(--primary);
+          position: relative;
+          overflow: hidden;
+          animation: fadeIn 0.8s ease-out;
+        }
+
+        .container::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 10px;
+          background: var(--gradient);
+          opacity: 0.7;
+        }
+
+        /* --- 2. RADAR ANIMATION --- */
+        .radar-container {
+          position: fixed;
+          top: 30px;
+          right: 30px;
+          width: 120px;
+          height: 120px;
+          border-radius: 50%;
+          background: rgba(0, 15, 30, 0.7);
+          box-shadow: 0 0 15px rgba(0, 168, 232, 0.4);
+          z-index: 100;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .radar-grid {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          border: 1px solid rgba(0, 168, 232, 0.3);
+        }
+
+        .radar-grid::before, .radar-grid::after {
+          content: '';
+          position: absolute;
+          background: rgba(0, 168, 232, 0.3);
+        }
+
+        .radar-grid::before {
+          top: 50%;
+          left: 0;
+          width: 100%;
+          height: 1px;
+        }
+
+        .radar-grid::after {
+          top: 0;
+          left: 50%;
+          width: 1px;
+          height: 100%;
+        }
+
+        .radar-sweep {
+          position: absolute;
+          top: 0;
+          left: 50%;
+          width: 50%;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(0, 255, 100, 0.7));
+          transform-origin: left center;
+          animation: sweep 4s linear infinite;
+        }
+
+        @keyframes sweep {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* --- 3. BUTTONS & INTERACTIONS --- */
+        #capture-btn, #retry-btn, .back-link {
+          background: var(--gradient);
+          color: white;
+          border: none;
+          padding: 12px 28px;
+          border-radius: 50px;
+          font-family: 'Poppins', sans-serif;
+          font-weight: 500;
+          cursor: pointer;
+          box-shadow: var(--shadow);
+          transition: var(--transition);
+          display: inline-block;
+          text-decoration: none;
+          text-align: center;
+        }
+
+        #capture-btn {
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 10;
+          font-size: 16px;
+          transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        #capture-btn:hover {
+          background: var(--gradient-reverse);
+          transform: translateX(-50%) translateY(-2px) scale(1.05);
+          box-shadow: var(--shadow-hover);
+        }
+
+        #capture-btn:active {
+          transform: translateX(-50%) scale(0.95);
+        }
+
+        #capture-btn:disabled {
+          background: var(--secondary);
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: translateX(-50%);
+          box-shadow: none;
+        }
+
+        .back-link {
+          padding: 8px 16px;
+          font-size: 14px;
+          margin-bottom: 20px;
+          display: inline-flex;
+          align-items: center;
+        }
+
+        .back-link:focus, #capture-btn:focus, #retry-btn:focus {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.5);
+        }
+
+        .back-link::before {
+          content: '←';
+          margin-right: 8px;
+        }
+
+        #retry-btn {
+          display: block;
+          margin: 20px auto;
+        }
+
+        /* SOS Button */
+        .sos-button {
+          position: fixed;
+          bottom: 30px;
+          right: 30px;
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background: var(--accent);
+          color: var(--dark);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-weight: 600;
+          box-shadow: var(--shadow);
+          cursor: pointer;
+          z-index: 100;
+          animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+          0% {
+            box-shadow: 0 0 0 0 rgba(255, 194, 14, 0.7);
+          }
+          70% {
+            box-shadow: 0 0 0 15px rgba(255, 194, 14, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(255, 194, 14, 0);
+          }
+        }
+
+        /* --- 4. AIR-HOSTESS HELPER WIDGET --- */
+        .air-hostess {
+          position: fixed;
+          bottom: 30px;
+          left: 30px;
+          width: 70px;
+          height: 70px;
+          border-radius: 50%;
+          background: white url('https://img.freepik.com/free-photo/portrait-young-beautiful-flight-attendant_8353-6615.jpg') center/cover;
+          box-shadow: var(--shadow);
+          cursor: pointer;
+          z-index: 100;
+          transition: var(--transition);
+          border: 3px solid var(--primary-light);
+        }
+
+        .air-hostess:hover {
+          transform: scale(1.05);
+        }
+
+        .air-hostess-tooltip {
+          position: fixed;
+          bottom: 110px;
+          left: 30px;
+          width: 240px;
+          background: white;
+          padding: 15px;
+          border-radius: var(--border-radius);
+          box-shadow: var(--shadow);
+          z-index: 99;
+          opacity: 0;
+          transform: scale(0.9) translateY(10px);
+          transform-origin: bottom left;
+          transition: var(--transition);
+          pointer-events: none;
+        }
+
+        .air-hostess-tooltip.active {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+          pointer-events: auto;
+        }
+
+        .air-hostess-tooltip h4 {
+          margin-top: 0;
+          color: var(--primary);
+          border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+          padding-bottom: 8px;
+        }
+
+        .help-button {
+          background: rgba(0, 76, 122, 0.1);
+          color: var(--primary);
+          border: none;
+          padding: 8px 12px;
+          border-radius: 4px;
+          margin: 5px 0;
+          cursor: pointer;
+          transition: var(--transition);
+          width: 100%;
+          text-align: left;
+          display: flex;
+          align-items: center;
+        }
+
+        .help-button::before {
+          content: '→';
+          margin-right: 8px;
+          transition: var(--transition);
+        }
+
+        .help-button:hover {
+          background: rgba(0, 76, 122, 0.2);
+        }
+
+        .help-button:hover::before {
+          transform: translateX(3px);
+        }
+
+        /* --- 5. SECTION STYLING --- */
+        #video-container {
+          width: 100%;
+          max-width: 640px;
+          margin: 30px auto;
+          position: relative;
+          border-radius: var(--border-radius);
+          overflow: hidden;
+          box-shadow: var(--shadow);
+          transform: translateY(20px);
+          opacity: 0;
+          animation: slideUp 0.8s forwards 0.3s;
+        }
+
+        #video {
+          width: 100%;
+          border-radius: var(--border-radius);
+          display: block;
+        }
+
+        .face-guide {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 5;
+        }
+
+        .face-oval {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 200px;
+          height: 250px;
+          border: 2px dashed var(--primary-light);
+          border-radius: 50%;
+          box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.3);
+        }
+
+        #captured-image {
+          width: 100%;
+          max-width: 640px;
+          margin: 20px auto;
+          border-radius: var(--border-radius);
+          box-shadow: var(--shadow);
+          display: none;
+          animation: fadeIn 0.5s;
+        }
+
+        .capture-instructions {
+          text-align: center;
+          margin: 15px 0;
+          color: var(--secondary);
+          font-size: 14px;
+          background: rgba(0, 168, 232, 0.1);
+          padding: 12px;
+          border-radius: 8px;
+          border-left: 3px solid var(--primary-light);
+        }
+
+        /* Result and User Info Styling */
+        #result, .user-info {
+          margin-top: 25px;
+          padding: 20px;
+          border-radius: var(--border-radius);
+          box-shadow: var(--shadow);
+          transform: translateY(20px);
+          opacity: 0;
+          animation: slideUp 0.5s forwards;
+        }
+
+        #result.success {
+          background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.2));
+          border-left: 4px solid #4CAF50;
+        }
+
+        #result.error {
+          background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.2));
+          border-left: 4px solid #F44336;
+        }
+
+        .user-info {
+          background: linear-gradient(135deg, rgba(0, 76, 122, 0.05), rgba(0, 168, 232, 0.1));
+          backdrop-filter: blur(5px);
+          border: 1px solid rgba(0, 168, 232, 0.2);
+        }
+
+        .user-info h3 {
+          margin-top: 0;
+          color: var(--primary);
+          border-bottom: 1px solid rgba(0, 76, 122, 0.2);
+          padding-bottom: 10px;
+        }
+
+        /* --- 6. LOADING OVERLAY ENHANCEMENT --- */
+        .loading-overlay {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 15, 30, 0.85);
+          z-index: 1000;
+          justify-content: center;
+          align-items: center;
+          backdrop-filter: blur(5px);
+        }
+
+        .loading-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .loading-spinner {
+          width: 60px;
+          height: 60px;
+          border: 4px solid rgba(255, 255, 255, 0.2);
+          border-top: 4px solid var(--primary-light);
+          border-radius: 50%;
+          animation: spin 1s linear infinite, glow 2s ease-in-out infinite;
+        }
+
+        .loading-text {
+          color: white;
+          margin-top: 25px;
+          font-size: 18px;
+          letter-spacing: 1px;
+          position: relative;
+        }
+
+        .loading-text::after {
+          content: '...';
+          position: absolute;
+          animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+          0%, 20% { content: '.'; }
+          40% { content: '..'; }
+          60%, 100% { content: '...'; }
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        @keyframes glow {
+          0%, 100% { box-shadow: 0 0 15px rgba(0, 168, 232, 0.6); }
+          50% { box-shadow: 0 0 25px rgba(0, 168, 232, 0.9); }
+        }
+
+        /* --- 7. ANIMATIONS --- */
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        /* --- 8. MEDIA QUERIES --- */
+        @media (max-width: 768px) {
+          .container {
+            margin: 1rem;
+            padding: 1.5rem;
+            width: auto;
+            max-width: none;
+            border-radius: 10px;
+          }
+          
+          h1 {
+            font-size: 24px;
+          }
+          
+          .radar-container {
+            top: 15px;
+            right: 15px;
+            width: 80px;
+            height: 80px;
+          }
+          
+          #video-container {
+            height: 320px !important;
+            max-height: 60vh !important;
+          }
+          
+          #video {
+            max-height: 100%;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+          }
+          
+          #face-guide {
+            width: 200px;
+            height: 200px;
+          }
+          
+          #capture-btn {
+            bottom: 15px;
+            width: 80%;
+            max-width: 250px;
+            padding: 12px 15px;
+            font-size: 15px;
+          }
+          
+          .sos-button {
+            bottom: 20px;
+            left: 20px;
+            width: 70px;
+            height: 70px;
+          }
+          
+          .air-hostess {
+            bottom: 20px;
+            right: 20px;
+            width: 70px;
+            height: 70px;
+          }
+          
+          .tooltip {
+            width: 200px;
+            right: 90px;
+          }
+          
+          .loading-text {
+            font-size: 16px;
+          }
+          
+          .logo {
+            height: 40px;
+          }
+          
+          .logo-container {
+            padding: 15px 0;
+            margin-bottom: 15px;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .container {
+            margin: 0;
+            padding: 1rem;
+            border-radius: 0;
+            min-height: 100vh;
+            box-sizing: border-box;
+          }
+          
+          .radar-container {
+            width: 60px;
+            height: 60px;
+          }
+          
+          #video-container {
+            height: 280px !important;
+            max-height: 50vh !important;
+          }
+          
+          #face-guide {
+            width: 180px;
+            height: 180px;
+          }
+          
+          #capture-btn {
+            width: 90%;
+            padding: 10px;
+            font-size: 14px;
+          }
+          
+          .back-link {
+            padding: 6px 12px;
+            font-size: 13px;
+          }
+          
+          h1 {
+            font-size: 1.5rem;
+          }
+          
+          .instructions {
+            font-size: 14px;
+          }
+          
+          .sos-button, .air-hostess {
+            width: 60px;
+            height: 60px;
+          }
+          
+          .tooltip {
+            width: 180px;
+            right: 70px;
+            font-size: 13px;
+          }
+        }
+
+        /* --- Logo Styles --- */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(0, 76, 122, 0.1);
+        }
+
+        .logo {
+            height: 50px;
+            width: auto;
+            transition: var(--transition);
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img src="https://static2.jazeeraairways.com/media/sadnkiax/optimised-j9-website-logo.webp" alt="Jazeera Airways" class="logo">
+        </div>
+        <a href="/" class="back-link">Back to Welcome</a>
+        <h1>Face Verification</h1>
+        
+        <div id="video-container">
+            <video id="video" autoplay playsinline></video>
+            <div class="face-guide">
+                <div class="face-oval"></div>
+                <div class="proximity-dots">
+                    <!-- Dots will be added dynamically -->
+                </div>
+                <div class="proximity-message">Move closer to the camera</div>
+            </div>
+            <button id="capture-btn">Capture Photo</button>
+        </div>
+        <p class="capture-instructions">Position your face within the oval guide. Make sure your entire face is visible and well-lit.</p>
+        <img id="captured-image" alt="Captured photo">
+        <button id="retry-btn" class="retry-btn">Retry</button>
+        
+        <div id="result"></div>
+        <div id="user-info" class="user-info"></div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Verifying face</div>
+        </div>
+    </div>
+
+    <script>
+        // Access the webcam
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('capture-btn');
+        const capturedImage = document.getElementById('captured-image');
+        const resultDiv = document.getElementById('result');
+        const userInfoDiv = document.getElementById('user-info');
+        const proximityMessage = document.querySelector('.proximity-message');
+        const videoContainer = document.getElementById('video-container');
+        const retryBtn = document.getElementById('retry-btn');
+        const captureInstructions = document.querySelector('.capture-instructions');
+
+        // Create proximity dots
+        function createProximityDots() {
+            const dotsContainer = document.querySelector('.proximity-dots');
+            const dotPositions = [
+                { top: '0%', left: '50%' },
+                { top: '50%', left: '0%' },
+                { top: '50%', left: '100%' },
+                { top: '100%', left: '50%' }
+            ];
+
+            dotPositions.forEach(pos => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.style.top = pos.top;
+                dot.style.left = pos.left;
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        // Check face position and proximity
+        function checkFacePosition() {
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            
+            if (!videoWidth || !videoHeight) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = videoWidth;
+            canvas.height = videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            // Get face detection data
+            const imageData = ctx.getImageData(0, 0, videoWidth, videoHeight);
+            const faceDetector = new FaceDetector();
+            
+            faceDetector.detect(imageData)
+                .then(faces => {
+                    if (faces.length === 0) {
+                        proximityMessage.textContent = 'No face detected';
+                        proximityMessage.style.display = 'block';
+                        captureBtn.disabled = true;
+                    } else {
+                        const face = faces[0];
+                        const faceWidth = face.boundingBox.width;
+                        const faceHeight = face.boundingBox.height;
+                        const minWidth = videoWidth * 0.3;
+                        const maxWidth = videoWidth * 0.5;
+
+                        if (faceWidth < minWidth) {
+                            proximityMessage.textContent = 'Move closer to the camera';
+                            proximityMessage.style.display = 'block';
+                            captureBtn.disabled = true;
+                        } else if (faceWidth > maxWidth) {
+                            proximityMessage.textContent = 'Move back from the camera';
+                            proximityMessage.style.display = 'block';
+                            captureBtn.disabled = true;
+                        } else {
+                            proximityMessage.style.display = 'none';
+                            captureBtn.disabled = false;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Face detection error:', error);
+                });
+        }
+
+        // Start the webcam
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                video.srcObject = stream;
+                createProximityDots();
+                setInterval(checkFacePosition, 100);
+            } catch (err) {
+                console.error("Error accessing webcam:", err);
+                alert("Error accessing webcam. Please make sure you have granted camera permissions.");
+            }
+        }
+
+        // Stop the webcam
+        function stopCamera() {
+            const stream = video.srcObject;
+            if (stream) {
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+        }
+
+        // Reset the verification process
+        function resetVerification() {
+            videoContainer.style.display = 'block';
+            capturedImage.style.display = 'none';
+            retryBtn.style.display = 'none';
+            captureInstructions.style.display = 'block';
+            resultDiv.style.display = 'none';
+            userInfoDiv.style.display = 'none';
+            startCamera();
+        }
+
+        // Capture photo and verify
+        captureBtn.addEventListener('click', async () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            // Convert to base64
+            const imageData = canvas.toDataURL('image/jpeg');
+            capturedImage.src = imageData;
+            
+            // Hide video and show captured image
+            videoContainer.style.display = 'none';
+            capturedImage.style.display = 'block';
+            retryBtn.style.display = 'block';
+            captureInstructions.style.display = 'none';
+            
+            // Stop the webcam
+            stopCamera();
+            
+            // Show loading overlay
+            const loadingOverlay = document.querySelector('.loading-overlay');
+            loadingOverlay.style.display = 'flex';
+            
+            // Send to server for verification
+            try {
+                const response = await fetch('/verify_face', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ image: imageData })
+                });
+                
+                const data = await response.json();
+                resultDiv.style.display = 'block';
+                
+                if (data.error) {
+                    resultDiv.className = 'error';
+                    resultDiv.textContent = data.error;
+                    userInfoDiv.style.display = 'none';
+                } else if (data.match) {
+                    resultDiv.className = 'success';
+                    resultDiv.textContent = 'Face verified successfully!';
+                    
+                    // Display user information
+                    userInfoDiv.style.display = 'block';
+                    userInfoDiv.innerHTML = `
+                        <h3>User Information</h3>
+                        <p><strong>Full Name:</strong> ${data.full_name}</p>
+                        <p><strong>Date of Birth:</strong> ${data.dob}</p>
+                        <p><strong>Passport ID:</strong> ${data.passport_id}</p>
+                        <p><strong>Flight ID:</strong> ${data.flight_id}</p>
+                    `;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.textContent = data.message;
+                    userInfoDiv.style.display = 'none';
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.textContent = 'Error verifying face: ' + error.message;
+                userInfoDiv.style.display = 'none';
+            } finally {
+                // Hide loading overlay
+                loadingOverlay.style.display = 'none';
+            }
+        });
+
+        // Retry button click handler
+        retryBtn.addEventListener('click', resetVerification);
+
+        // Start camera when page loads
+        startCamera();
+
+        // Airport Radar and Helper Widget JS
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create and append radar
+            const radar = document.createElement('div');
+            radar.className = 'radar-container';
+            radar.innerHTML = `
+                <div class="radar-grid"></div>
+                <div class="radar-sweep"></div>
+            `;
+            document.body.appendChild(radar);
+            
+            // Create and append SOS button
+            const sosBtn = document.createElement('div');
+            sosBtn.className = 'sos-button';
+            sosBtn.textContent = 'SOS';
+            sosBtn.setAttribute('aria-label', 'Emergency assistance');
+            document.body.appendChild(sosBtn);
+            
+            // Create and append air hostess helper
+            const hostess = document.createElement('div');
+            hostess.className = 'air-hostess';
+            hostess.setAttribute('aria-label', 'Air hostess assistance');
+            
+            const tooltip = document.createElement('div');
+            tooltip.className = 'air-hostess-tooltip';
+            tooltip.innerHTML = `
+                <h4>How can I help you?</h4>
+                <button class="help-button" aria-label="Get lost luggage assistance">Lost Luggage</button>
+                <button class="help-button" aria-label="Get flight delay information">Flight Delay Info</button>
+                <button class="help-button" aria-label="Find nearest restroom">Find Restroom</button>
+            `;
+            
+            document.body.appendChild(hostess);
+            document.body.appendChild(tooltip);
+            
+            // Toggle tooltip visibility
+            hostess.addEventListener('click', function() {
+                tooltip.classList.toggle('active');
+            });
+            
+            // Close tooltip when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!hostess.contains(e.target) && !tooltip.contains(e.target)) {
+                    tooltip.classList.remove('active');
+                }
+            });
+            
+            // Add entrance animations on scroll
+            const observeElements = document.querySelectorAll('#video-container, #result, .user-info');
+            
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.style.animation = 'slideUp 0.8s forwards';
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.1 });
+                
+                observeElements.forEach(el => observer.observe(el));
+            }
+        });
+    </script>
+</body>
+</html> 
