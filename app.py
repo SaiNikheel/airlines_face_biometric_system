@@ -15,6 +15,7 @@ import base64
 import numpy as np
 from deepface import DeepFace
 import cv2
+import redis
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -22,9 +23,10 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_TYPE'] = 'redis'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_REDIS'] = redis.from_url(os.environ.get('REDIS_URL'))
 Session(app)
 
 # Google OAuth2 configuration
@@ -396,5 +398,5 @@ def verify_face():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=port, debug=False) 
