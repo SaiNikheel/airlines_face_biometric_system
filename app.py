@@ -15,7 +15,6 @@ import base64
 import numpy as np
 from deepface import DeepFace
 import cv2
-import redis
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -23,10 +22,9 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
-app.config['SESSION_REDIS'] = redis.from_url(os.environ.get('REDIS_URL'))
 Session(app)
 
 # Google OAuth2 configuration
@@ -36,7 +34,7 @@ SCOPES = ['https://www.googleapis.com/auth/userinfo.profile',
           'openid']
 
 # OAuth2 configuration
-REDIRECT_URI = os.environ.get('REDIRECT_URI', 'http://localhost:3000/oauth2callback')
+REDIRECT_URI = 'http://localhost:3000/oauth2callback'
 
 # Ensure the data directory exists
 if not os.path.exists('data'):
@@ -398,5 +396,5 @@ def verify_face():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 3000))
-    app.run(host='0.0.0.0', port=port, debug=False) 
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Only for development
+    app.run(host='localhost', port=3000, debug=True) 
