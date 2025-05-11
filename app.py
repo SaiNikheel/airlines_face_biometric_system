@@ -34,7 +34,23 @@ SCOPES = ['https://www.googleapis.com/auth/userinfo.profile',
           'openid']
 
 # OAuth2 configuration
-REDIRECT_URI = 'http://localhost:3000/oauth2callback'
+# Read REDIRECT_URI from client_secret.json dynamically
+try:
+    with open(CLIENT_SECRETS_FILE, 'r') as f:
+        client_secrets = json.load(f)
+        # Assuming the first redirect_uri in the list is the correct one
+        REDIRECT_URI = client_secrets.get('web', {}).get('redirect_uris', [''])[0]
+        if not REDIRECT_URI:
+            raise ValueError("redirect_uris not found or is empty in client_secret.json")
+except FileNotFoundError:
+    logger.error(f"Client secrets file not found at {CLIENT_SECRETS_FILE}")
+    REDIRECT_URI = '' # Set a default or handle error appropriately
+except json.JSONDecodeError:
+    logger.error(f"Error decoding JSON from {CLIENT_SECRETS_FILE}")
+    REDIRECT_URI = ''
+except Exception as e:
+    logger.error(f"Error reading redirect URI from {CLIENT_SECRETS_FILE}: {e}")
+    REDIRECT_URI = ''
 
 # Ensure the data directory exists
 if not os.path.exists('data'):
