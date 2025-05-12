@@ -19,7 +19,6 @@ try:
     print("Downloading targeted face recognition model...")
     models = [
         "GhostFaceNet",  # Primary model
-        "Facenet512",    # Fallback model
     ]
     
     # Try to download only the specified models
