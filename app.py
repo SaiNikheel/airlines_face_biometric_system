@@ -281,10 +281,10 @@ def get_face_embedding():
             detector_backend = "opencv"  # Faster and more reliable than retinaface
             print(f"Extracting face using {detector_backend} detector")
             
-            # Extract the face embedding
-            print("Generating face embedding...")
+            # Extract the face embedding using GhostFaceNet instead of Facenet
+            print("Generating face embedding with GhostFaceNet...")
             embedding_objs = DeepFace.represent(img_path=temp_path, 
-                                       model_name="Facenet", 
+                                       model_name="GhostFaceNet", 
                                        detector_backend=detector_backend,
                                        enforce_detection=True)
                                        
@@ -311,6 +311,20 @@ def get_face_embedding():
                 return jsonify({'error': 'No face detected in the image. Please ensure your face is clearly visible.'}), 400
             elif "NotImplementedError" in error_message:
                 return jsonify({'error': 'Face detection backend not available. Please try again.'}), 500
+            elif "model_name" in error_message and "GhostFaceNet" in error_message:
+                # Fallback to Facenet if GhostFaceNet is not available
+                print("GhostFaceNet not available, falling back to Facenet512")
+                embedding_objs = DeepFace.represent(img_path=temp_path, 
+                                           model_name="Facenet512", 
+                                           detector_backend=detector_backend,
+                                           enforce_detection=True)
+                
+                if not embedding_objs:
+                    return jsonify({'error': 'Failed to generate face embedding with fallback model'}), 500
+                    
+                embedding = embedding_objs[0]["embedding"]
+                print(f"Face embedding generated with fallback model, length: {len(embedding)}")
+                return jsonify({'embedding': embedding})
             else:
                 return jsonify({'error': f'Failed to generate face embedding: {error_message}'}), 500
     
@@ -372,15 +386,30 @@ def verify_face():
                 'details': f'Face width ratio: {face_width_ratio:.2f}'
             }), 400
 
-        # Generate face embedding for verification using both Facenet512 and VGG-Face
-        # This uses two different models for cross-validation
-        facenet_embedding = DeepFace.represent(
-            img_path=temp_image_path,
-            model_name='Facenet512',
-            detector_backend='retinaface',
-            enforce_detection=True,
-            align=True
-        )[0]['embedding']
+        # Generate face embedding using GhostFaceNet
+        try:
+            primary_embedding = DeepFace.represent(
+                img_path=temp_image_path,
+                model_name='GhostFaceNet',
+                detector_backend='retinaface',
+                enforce_detection=True,
+                align=True
+            )[0]['embedding']
+            
+            model_name = 'GhostFaceNet'
+            
+        except Exception as e:
+            # Fallback to Facenet512 if GhostFaceNet is not available
+            print(f"Error using GhostFaceNet, falling back to Facenet512: {str(e)}")
+            primary_embedding = DeepFace.represent(
+                img_path=temp_image_path,
+                model_name='Facenet512',
+                detector_backend='retinaface',
+                enforce_detection=True,
+                align=True
+            )[0]['embedding']
+            
+            model_name = 'Facenet512'
         
         # Try to get VGG-Face embedding as a secondary verification
         try:
@@ -392,7 +421,7 @@ def verify_face():
                 align=True
             )[0]['embedding']
         except:
-            # If VGG-Face fails, proceed with just Facenet512
+            # If VGG-Face fails, proceed with just the primary model
             vgg_embedding = None
 
         # Clean up temporary file
@@ -400,12 +429,16 @@ def verify_face():
 
         # Compare with stored embeddings
         best_match = None
-        best_facenet_distance = float('inf')
+        best_primary_distance = float('inf')
         best_vgg_distance = float('inf')
         
-        # Much stricter thresholds
-        facenet_threshold = 0.35  # Very strict threshold for cosine similarity
+        # Thresholds for different models
+        ghostfacenet_threshold = 0.30  # Stricter threshold for GhostFaceNet
+        facenet_threshold = 0.35  # For Facenet512 fallback
         vgg_threshold = 0.40  # Threshold for VGG-Face if available
+        
+        # Select appropriate threshold based on the model used
+        primary_threshold = ghostfacenet_threshold if model_name == 'GhostFaceNet' else facenet_threshold
 
         with open(CSV_FILE, 'r', newline='') as f:
             reader = csv.DictReader(f)
@@ -413,31 +446,31 @@ def verify_face():
                 stored_embedding = json.loads(row['face_embedding'])
                 
                 # Convert embeddings to numpy arrays
-                facenet_verify_array = np.array(facenet_embedding)
+                primary_verify_array = np.array(primary_embedding)
                 stored_array = np.array(stored_embedding)
                 
-                # Calculate cosine similarity for Facenet512
-                similarity = np.dot(facenet_verify_array, stored_array) / (np.linalg.norm(facenet_verify_array) * np.linalg.norm(stored_array))
-                facenet_distance = 1 - similarity  # Convert similarity to distance
+                # Calculate cosine similarity
+                similarity = np.dot(primary_verify_array, stored_array) / (np.linalg.norm(primary_verify_array) * np.linalg.norm(stored_array))
+                primary_distance = 1 - similarity  # Convert similarity to distance
                 
                 # Track best match
-                if facenet_distance < best_facenet_distance:
-                    best_facenet_distance = facenet_distance
+                if primary_distance < best_primary_distance:
+                    best_primary_distance = primary_distance
                     best_match = row
                     
                     # If we have VGG embeddings, check them too
                     if vgg_embedding is not None:
                         # We need to get the VGG embedding for the stored face as well
-                        # For simplicity, we'll just use the Facenet distance for now
-                        best_vgg_distance = facenet_distance
+                        # For simplicity, we'll just use the primary distance for now
+                        best_vgg_distance = primary_distance
 
-        logger.debug(f"Best Facenet distance: {best_facenet_distance}, Threshold: {facenet_threshold}")
+        logger.debug(f"Best {model_name} distance: {best_primary_distance}, Threshold: {primary_threshold}")
         if vgg_embedding is not None:
             logger.debug(f"Best VGG distance: {best_vgg_distance}, Threshold: {vgg_threshold}")
         
-        # Check if BOTH models verified (if using VGG) or just Facenet is very confident
+        # Check if BOTH models verified (if using VGG) or just primary model is very confident
         if best_match and (
-            best_facenet_distance < facenet_threshold and 
+            best_primary_distance < primary_threshold and 
             (vgg_embedding is None or best_vgg_distance < vgg_threshold)
         ):
             return jsonify({
@@ -446,15 +479,17 @@ def verify_face():
                 'dob': best_match['dob'],
                 'passport_id': best_match['passport_id'],
                 'flight_id': best_match['flight_id'],
-                'distance': float(best_facenet_distance),
-                'threshold': facenet_threshold
+                'distance': float(best_primary_distance),
+                'threshold': primary_threshold,
+                'model': model_name
             })
         else:
             return jsonify({
                 'match': False, 
                 'message': 'No matching face found in database',
-                'best_distance': float(best_facenet_distance),
-                'threshold': facenet_threshold
+                'best_distance': float(best_primary_distance),
+                'threshold': primary_threshold,
+                'model': model_name
             })
 
     except Exception as e:
@@ -477,14 +512,25 @@ def preload_deepface_models():
             print(f"DeepFace home directory not found at {deepface_home}")
             os.makedirs(deepface_home, exist_ok=True)
             
-        # Try to load the model with existing files first
+        # Try to load GhostFaceNet model first
         try:
-            model = DeepFace.build_model("Facenet")
-            print("DeepFace Facenet model loaded successfully from cache")
+            print("Attempting to load GhostFaceNet model...")
+            model = DeepFace.build_model("GhostFaceNet")
+            print("GhostFaceNet model loaded successfully from cache")
+            primary_model = "GhostFaceNet"
         except Exception as e:
-            print(f"Error loading cached model: {e}")
-            print("Attempting to download model...")
-            model = DeepFace.build_model("Facenet")
+            print(f"Error loading GhostFaceNet model: {e}")
+            print("Falling back to Facenet512...")
+            try:
+                model = DeepFace.build_model("Facenet512")
+                print("Facenet512 model loaded successfully as fallback")
+                primary_model = "Facenet512"
+            except Exception as e2:
+                print(f"Error loading Facenet512 model: {e2}")
+                print("Attempting to load Facenet model...")
+                model = DeepFace.build_model("Facenet")
+                print("Facenet model loaded successfully from cache")
+                primary_model = "Facenet"
             
         # Force model loading for faster first request
         detector_backend = "retinaface"
@@ -497,7 +543,7 @@ def preload_deepface_models():
             print(f"Error with {detector_backend} detector: {e}")
             print("Falling back to opencv detector")
             
-        print("DeepFace models preloaded successfully")
+        print(f"DeepFace models preloaded successfully. Primary model: {primary_model}")
         return True
     except Exception as e:
         print(f"Error preloading DeepFace models: {e}")
