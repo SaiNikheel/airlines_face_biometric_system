@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """
-Pre-downloads all DeepFace models to prevent runtime timeout errors.
+Pre-downloads only the GhostFaceNet model to prevent runtime timeout errors.
 Run this during the build phase on Render.
 """
 import os
 import sys
 import time
-print("Starting model download process...")
+print("Starting targeted model download process...")
 
 try:
     from deepface import DeepFace
@@ -15,28 +15,35 @@ try:
     # Create output directory for logs
     os.makedirs("model_downloads", exist_ok=True)
     
-    # Force download of main models
-    print("Downloading face detection models...")
+    # Only attempt to download GhostFaceNet and fallback model
+    print("Downloading targeted face recognition model...")
     models = [
-        "VGG-Face", 
-        "Facenet", 
-        "Facenet512", 
-        "OpenFace", 
-        "DeepFace", 
-        "DeepID", 
-        "ArcFace", 
-        "SFace"
+        "GhostFaceNet",  # Primary model
+        "Facenet512",    # Fallback model
     ]
     
-    # Download all face recognition models
+    # Try to download only the specified models
+    primary_model = None
     for model_name in models:
-        print(f"Downloading {model_name} model...")
-        model = DeepFace.build_model(model_name)
-        print(f"✓ {model_name} downloaded successfully")
+        try:
+            print(f"Downloading {model_name} model...")
+            model = DeepFace.build_model(model_name)
+            print(f"✓ {model_name} downloaded successfully")
+            
+            if primary_model is None:
+                primary_model = model_name
+                print(f"Successfully set {model_name} as primary model")
+        except Exception as e:
+            print(f"× Error downloading {model_name}: {str(e)}")
     
-    # Download detector models (RetinaFace, MTCNN, etc.)
-    print("Downloading face detector models...")
-    detectors = ['opencv', 'ssd', 'dlib', 'mtcnn', 'retinaface', 'mediapipe', 'yolov8']
+    if primary_model is None:
+        print("WARNING: Failed to download any of the specified models!")
+    else:
+        print(f"Primary model set to: {primary_model}")
+    
+    # Download only necessary detector backends
+    print("Downloading minimal set of face detectors...")
+    detectors = ['opencv', 'retinaface']  # Only the ones we actually use
     for detector in detectors:
         try:
             print(f"Testing detector: {detector}")
@@ -46,12 +53,7 @@ try:
         except Exception as e:
             print(f"× Error with {detector}: {str(e)}")
     
-    # Download auxiliary models
-    print("Downloading auxiliary models (age, gender, emotion, race)...")
-    DeepFace.analyze(img_path="https://github.com/serengil/deepface/raw/master/tests/dataset/img1.jpg", 
-                    actions=['age', 'gender', 'emotion', 'race'])
-    
-    print("All models downloaded successfully!")
+    print("Targeted model download completed!")
     
     # List all downloaded model files
     base_dir = os.path.join(os.path.expanduser('~'), '.deepface')
@@ -66,7 +68,7 @@ try:
     
     # Create a marker file to indicate successful download
     with open("model_downloads/success.txt", "w") as f:
-        f.write(f"Models downloaded successfully at {time.ctime()}")
+        f.write(f"Models downloaded successfully at {time.ctime()}, primary model: {primary_model}")
     
     sys.exit(0)  # Success
     

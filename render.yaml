@@ -4,6 +4,7 @@ services:
     env: python
     buildCommand: |
       pip install -r requirements.txt
+      echo "Downloading only GhostFaceNet model..."
       python download_models.py
       mkdir -p ~/.deepface
       mkdir -p model_cache
@@ -20,4 +21,6 @@ services:
         value: production
       - key: DEEPFACE_HOME
         value: /opt/render/project/model_cache
+      - key: MODEL_NAME
+        value: GhostFaceNet
     healthCheckPath: / 
