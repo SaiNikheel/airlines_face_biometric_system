@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Pre-downloads only the GhostFaceNet model to prevent runtime timeout errors.
+Pre-downloads ONLY the GhostFaceNet model to prevent runtime timeout errors.
 Run this during the build phase on Render.
 """
 import os
@@ -15,42 +15,30 @@ try:
     # Create output directory for logs
     os.makedirs("model_downloads", exist_ok=True)
     
-    # Only attempt to download GhostFaceNet and fallback model
-    print("Downloading targeted face recognition model...")
-    models = [
-        "GhostFaceNet",  # Primary model
-    ]
+    # Only download GhostFaceNet model - no fallbacks
+    print("Downloading only GhostFaceNet model...")
+    model_name = "GhostFaceNet"
     
-    # Try to download only the specified models
-    primary_model = None
-    for model_name in models:
-        try:
-            print(f"Downloading {model_name} model...")
-            model = DeepFace.build_model(model_name)
-            print(f"✓ {model_name} downloaded successfully")
-            
-            if primary_model is None:
-                primary_model = model_name
-                print(f"Successfully set {model_name} as primary model")
-        except Exception as e:
-            print(f"× Error downloading {model_name}: {str(e)}")
+    try:
+        print(f"Downloading {model_name} model...")
+        model = DeepFace.build_model(model_name)
+        print(f"✓ {model_name} downloaded successfully")
+        primary_model = model_name
+    except Exception as e:
+        print(f"× Error downloading {model_name}: {str(e)}")
+        print("CRITICAL: Failed to download GhostFaceNet model")
+        sys.exit(1)  # Exit with error
     
-    if primary_model is None:
-        print("WARNING: Failed to download any of the specified models!")
-    else:
-        print(f"Primary model set to: {primary_model}")
-    
-    # Download only necessary detector backends
-    print("Downloading minimal set of face detectors...")
-    detectors = ['opencv', 'retinaface']  # Only the ones we actually use
-    for detector in detectors:
-        try:
-            print(f"Testing detector: {detector}")
-            DeepFace.extract_faces(img_path="https://github.com/serengil/deepface/raw/master/tests/dataset/img1.jpg", 
-                                  detector_backend=detector)
-            print(f"✓ {detector} detector downloaded and working")
-        except Exception as e:
-            print(f"× Error with {detector}: {str(e)}")
+    # Download only opencv detector backend - it's faster and more reliable
+    print("Downloading minimal face detector...")
+    detector = 'opencv'  # Single detector only
+    try:
+        print(f"Testing {detector} detector...")
+        DeepFace.extract_faces(img_path="https://github.com/serengil/deepface/raw/master/tests/dataset/img1.jpg", 
+                              detector_backend=detector)
+        print(f"✓ {detector} detector downloaded and working")
+    except Exception as e:
+        print(f"× Error with {detector} detector: {str(e)}")
     
     print("Targeted model download completed!")
     
@@ -67,7 +55,7 @@ try:
     
     # Create a marker file to indicate successful download
     with open("model_downloads/success.txt", "w") as f:
-        f.write(f"Models downloaded successfully at {time.ctime()}, primary model: {primary_model}")
+        f.write(f"GhostFaceNet model downloaded successfully at {time.ctime()}")
     
     sys.exit(0)  # Success
     
