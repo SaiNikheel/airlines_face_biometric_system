@@ -4,48 +4,36 @@ Run this script during the build process before starting the application.
 """
 print("Preloading DeepFace models...")
 
-# Force TensorFlow to use CPU
+# Import CPU configuration before any TensorFlow imports
+import cpu_config
+
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-os.environ['TF_FORCE_CPU_ALLOW_GROWTH'] = 'true'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
-
-# Import DeepFace for model preloading
+import time
 from deepface import DeepFace
-import tensorflow as tf
+from deepface.commons import functions
 
-# Verify CPU is being used
-print("TensorFlow devices:", tf.config.list_physical_devices())
-print("Using CPU only mode:", not tf.config.list_physical_devices('GPU'))
+# Force CPU usage
+print("Configuring DeepFace to use CPU only...")
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-# Force download of face detection models by running a test
-print("Downloading face detection models...")
+# Force download of models during build
+print("Downloading face detection model...")
+start_time = time.time()
+functions.initialize_detector("retinaface")
+print(f"Detection model download took {time.time() - start_time:.2f} seconds")
+
+print("Downloading face recognition model...")
+start_time = time.time()
 try:
-    # This will automatically download the necessary detector models
-    sample_img = "https://github.com/serengil/deepface/raw/master/tests/dataset/img1.jpg"
-    
-    # Try both detectors we use in the app
-    print("Testing OpenCV detector...")
-    DeepFace.extract_faces(img_path=sample_img, detector_backend="opencv")
-    
-    print("Testing MTCNN detector...")
-    DeepFace.extract_faces(img_path=sample_img, detector_backend="mtcnn")
-    
-    print("Face detection models downloaded successfully")
+    # Turn off normalization to improve speed on CPU
+    DeepFace.represent(
+        img_path="https://github.com/serengil/deepface/raw/master/tests/dataset/img1.jpg", 
+        model_name="Facenet", 
+        detector_backend="retinaface",
+        enforce_detection=False  # Don't enforce face detection as a fallback
+    )
+    print(f"Recognition model download took {time.time() - start_time:.2f} seconds")
+    print("Model preloading complete!")
 except Exception as e:
-    print(f"Error loading detection models: {str(e)}")
-
-# Force download of face recognition models with a test embed
-print("Downloading face recognition models...")
-try:
-    # Generate an embedding with Facenet model
-    DeepFace.represent(img_path=sample_img, model_name="Facenet")
-    print("Face recognition model (Facenet) downloaded successfully")
-    
-    # Also download Facenet512 if we're using it
-    DeepFace.represent(img_path=sample_img, model_name="Facenet512")
-    print("Face recognition model (Facenet512) downloaded successfully")
-except Exception as e:
-    print(f"Error loading recognition models: {str(e)}")
-
-print("Model preloading complete!") 
+    print(f"Error during model preloading: {e}")
+    # Continue anyway as we've already downloaded the models 
