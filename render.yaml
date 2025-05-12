@@ -2,11 +2,12 @@ services:
   - type: web
     name: face-recognition-biometric
     env: python
-    buildCommand: ./build.sh
-    startCommand: gunicorn app:app -c gunicorn.conf.py --preload
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --timeout 120 --workers 1
+    plan: standard
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.0
-    healthCheckPath: /
-    healthCheckTimeout: 300
-    autoDeploy: true 
+        value: 3.9.22
+      - key: FLASK_ENV
+        value: production
+    healthCheckPath: / 

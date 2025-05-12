@@ -1,19 +1,26 @@
-# Gunicorn configuration file
-import multiprocessing
+# Gunicorn configuration for face recognition app
 
-# Increase timeout to handle face recognition processing
-timeout = 300  # Increased to 5 minutes from previous 120 seconds
-workers = multiprocessing.cpu_count() * 2 + 1
+# Timeout settings
+timeout = 120  # 2 minutes to allow for face processing
+graceful_timeout = 120
+
+# Worker settings
+workers = 1  # For face recognition, multiple workers can consume too much memory
+worker_class = 'sync'
+worker_connections = 1000
 threads = 2
-worker_class = 'gthread'
+
+# Server settings
+bind = "0.0.0.0:$PORT"
+
+# Restart workers occasionally to help with memory issues
+max_requests = 1000
+max_requests_jitter = 100
+
+# Logging
+accesslog = '-'
+errorlog = '-'
 loglevel = 'info'
-keepalive = 120  # Keep connections alive for 2 minutes
-worker_tmp_dir = '/tmp'  # Use tmp directory for worker heartbeats
-graceful_timeout = 120   # Grace period for workers to finish
 
-# Increase timeout to handle face recognition processing
-timeout = 120
-workers = multiprocessing.cpu_count() * 2 + 1
-threads = 2
-worker_class = 'gthread'
-loglevel = 'info' 
+# Optimize for longer requests
+keepalive = 5 
