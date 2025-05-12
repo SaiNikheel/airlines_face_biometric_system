@@ -1,8 +1,7 @@
-# Force CPU mode for TensorFlow before any imports
+# Import CPU configuration first to disable GPU
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-os.environ['TF_FORCE_CPU_ALLOW_GROWTH'] = 'true'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logging
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 import pandas as pd
@@ -14,21 +13,30 @@ from flask_session import Session
 import json
 import logging
 from google.oauth2 import id_token
-from google.auth.transport import requests
+from google.auth.transport import requests as greq
 import csv
 import base64
 import numpy as np
-import cv2
+import tensorflow as tf
 
-# Import DeepFace after setting environment variables
+# Configure TensorFlow to use CPU only
+try:
+    physical_devices = tf.config.list_physical_devices('GPU')
+    if len(physical_devices) > 0:
+        for device in physical_devices:
+            tf.config.set_visible_devices([], 'GPU')
+            print(f"Disabled GPU device: {device}")
+    print("TensorFlow configured to use CPU only")
+except Exception as e:
+    print(f"Error disabling GPU: {e}")
+
+# Import DeepFace after GPU is disabled
 from deepface import DeepFace
+import cv2
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-# Log TensorFlow config
-logger.info("Running with CPU-only configuration for TensorFlow")
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -236,223 +244,291 @@ def verify():
 @app.route('/get_face_embedding', methods=['POST'])
 def get_face_embedding():
     try:
+        logger.info("Starting face embedding generation")
         data = request.get_json()
         if not data or 'image' not in data:
             return jsonify({'error': 'No image data provided'}), 400
 
-        # Log detailed debug information
-        logger.debug("Received image for embedding generation")
-
         # Decode base64 image
         try:
-            # Handle both with and without data URL prefix
-            if "," in data['image']:
+            if ',' in data['image']:
                 image_data = data['image'].split(',')[1]
             else:
                 image_data = data['image']
-                
             image_bytes = base64.b64decode(image_data)
-            logger.debug(f"Successfully decoded base64 image of {len(image_bytes)} bytes")
-        except Exception as e:
-            logger.error(f"Error decoding image: {str(e)}")
-            return jsonify({'error': f'Invalid image format: {str(e)}'}), 400
+        except Exception as decode_error:
+            logger.error(f"Error decoding image: {str(decode_error)}")
+            return jsonify({'error': 'Invalid image format. Please provide a valid base64 encoded image.'}), 400
         
         # Save temporary image file
         temp_image_path = 'temp_face.jpg'
         with open(temp_image_path, 'wb') as f:
             f.write(image_bytes)
-        logger.debug(f"Saved temporary image to {temp_image_path}")
 
-        # Use a try-except block with more detailed logging for DeepFace operations
+        logger.info("Image saved to temporary file, starting face detection")
+
+        # First check if a face can be detected (with more relaxed parameters)
         try:
-            logger.debug("Starting face embedding generation with DeepFace")
-            # Use a simpler backend and disable enforcement for better compatibility
-            embedding = DeepFace.represent(
+            # Try face detection first with more relaxed settings
+            faces = DeepFace.extract_faces(
                 img_path=temp_image_path,
-                model_name='Facenet512',
-                detector_backend='opencv',  # Use OpenCV instead of retinaface for better compatibility
-                enforce_detection=False,    # Don't enforce detection to be more lenient
+                detector_backend='opencv',  # Use OpenCV instead of RetinaFace for faster detection
+                enforce_detection=False,    # Don't enforce detection
                 align=True
             )
-            logger.debug("Successfully generated face embedding")
-        except Exception as e:
-            logger.error(f"Error in DeepFace represent: {str(e)}")
             
-            # Try an alternate approach with reduced complexity
+            if not faces:
+                logger.warning("No face detected in the image")
+                os.remove(temp_image_path)
+                return jsonify({'error': 'No face detected in the image. Please try again with better lighting and positioning.'}), 400
+                
+            logger.info(f"Face detection successful. Found {len(faces)} faces.")
+            
+            # If multiple faces, use the largest one
+            if len(faces) > 1:
+                logger.warning(f"Multiple faces ({len(faces)}) detected in image. Using the largest one.")
+                # Find face with largest area
+                largest_face = max(faces, key=lambda x: 
+                    x['facial_area']['w'] * x['facial_area']['h'])
+                
+                # Extract just that face to a new image
+                img = cv2.imread(temp_image_path)
+                x = largest_face['facial_area']['x']
+                y = largest_face['facial_area']['y']
+                w = largest_face['facial_area']['w']
+                h = largest_face['facial_area']['h']
+                
+                # Add some margin
+                margin = int(max(w, h) * 0.2)
+                x = max(0, x - margin)
+                y = max(0, y - margin)
+                w = min(img.shape[1] - x, w + 2 * margin)
+                h = min(img.shape[0] - y, h + 2 * margin)
+                
+                face_img = img[y:y+h, x:x+w]
+                cv2.imwrite(temp_image_path, face_img)
+        
+        except Exception as detect_error:
+            logger.error(f"Error in face detection: {str(detect_error)}")
+            # Continue to the embedding generation, as DeepFace.represent has its own detection
+
+        logger.info("Generating face embedding")
+        
+        # Generate face embedding using DeepFace with CPU-friendly settings
+        try:
+            embedding = DeepFace.represent(
+                img_path=temp_image_path,
+                model_name='Facenet',  # Use Facenet instead of Facenet512 for CPU
+                detector_backend='opencv',  # Use OpenCV instead of RetinaFace for CPU
+                enforce_detection=False,    # More lenient detection
+                align=True,
+                normalization='base'        # Simpler normalization for CPU
+            )
+            
+            # Clean up temporary file
+            os.remove(temp_image_path)
+            
+            logger.info("Face embedding generated successfully")
+            return jsonify({'embedding': embedding[0]['embedding']})
+            
+        except Exception as embedding_error:
+            logger.error(f"Error generating embedding: {str(embedding_error)}")
+            
+            # Try with even more relaxed settings as a last resort
             try:
-                logger.debug("Attempting alternate face detection with simpler parameters")
+                logger.info("Trying with more relaxed settings as fallback")
                 embedding = DeepFace.represent(
                     img_path=temp_image_path,
-                    model_name='Facenet', # Use simpler model
-                    detector_backend='mtcnn', # Try different backend
+                    model_name='Facenet',
+                    detector_backend='skip',  # Skip detection completely
                     enforce_detection=False,
-                    align=False
+                    align=False              # Skip alignment
                 )
-                logger.debug("Successfully generated face embedding with fallback method")
-            except Exception as e2:
-                logger.error(f"Error in fallback DeepFace represent: {str(e2)}")
-                # Clean up and return error
+                
+                # Clean up temporary file
+                os.remove(temp_image_path)
+                
+                logger.info("Face embedding generated with fallback settings")
+                return jsonify({'embedding': embedding[0]['embedding']})
+                
+            except Exception as fallback_error:
                 if os.path.exists(temp_image_path):
                     os.remove(temp_image_path)
-                return jsonify({'error': f'Could not detect face in image: {str(e2)}'}), 400
-
-        # Clean up temporary file
-        if os.path.exists(temp_image_path):
-            os.remove(temp_image_path)
-            logger.debug("Cleaned up temporary image file")
-
-        # Just to be safe, cap the length of the embedding if it's exceptionally large
-        if len(embedding[0]['embedding']) > 1000:
-            logger.warning(f"Embedding suspiciously large: {len(embedding[0]['embedding'])} elements")
-
-        return jsonify({'embedding': embedding[0]['embedding']})
+                logger.error(f"Fallback also failed: {str(fallback_error)}")
+                return jsonify({'error': f'Unable to generate face embedding. Please try again with a clearer photo of your face.'}), 400
 
     except Exception as e:
-        logger.error(f"Error generating face embedding: {str(e)}")
-        # Try to clean up if an exception occurred
-        if 'temp_image_path' in locals() and os.path.exists(temp_image_path):
+        if 'temp_face.jpg' in locals() and os.path.exists(temp_image_path):
             os.remove(temp_image_path)
+        logger.error(f"Error generating face embedding: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/verify_face', methods=['POST'])
 def verify_face():
     try:
+        logger.info("Starting face verification")
         data = request.get_json()
         if not data or 'image' not in data:
             return jsonify({'error': 'No image data provided'}), 400
 
-        # Log detailed debug information
-        logger.debug("Received image for face verification")
-
         # Decode base64 image
         try:
-            # Handle both with and without data URL prefix
-            if "," in data['image']:
+            if ',' in data['image']:
                 image_data = data['image'].split(',')[1]
             else:
                 image_data = data['image']
-                
             image_bytes = base64.b64decode(image_data)
-            logger.debug(f"Successfully decoded base64 image of {len(image_bytes)} bytes")
-        except Exception as e:
-            logger.error(f"Error decoding image: {str(e)}")
-            return jsonify({'error': f'Invalid image format: {str(e)}'}), 400
+        except Exception as decode_error:
+            logger.error(f"Error decoding image: {str(decode_error)}")
+            return jsonify({'error': 'Invalid image format. Please provide a valid base64 encoded image.'}), 400
         
         # Save temporary image file
         temp_image_path = 'temp_verify.jpg'
         with open(temp_image_path, 'wb') as f:
             f.write(image_bytes)
-        logger.debug(f"Saved temporary image to {temp_image_path}")
 
-        # First, verify face detection quality with a simpler backend
+        logger.info("Image saved to temporary file, starting face detection")
+
+        # First, verify face detection quality with more CPU-friendly settings
         try:
-            logger.debug("Extracting faces with OpenCV backend")
             face_objs = DeepFace.extract_faces(
                 img_path=temp_image_path,
-                detector_backend='opencv',  # Use OpenCV instead of retinaface
-                enforce_detection=False,
+                detector_backend='opencv',  # Use OpenCV instead of RetinaFace for faster detection
+                enforce_detection=False,    # Don't enforce detection
                 align=True
             )
-        except Exception as e:
-            logger.error(f"Error in face extraction: {str(e)}")
-            # Try a fallback method
-            try:
-                logger.debug("Attempting fallback face extraction with MTCNN")
-                face_objs = DeepFace.extract_faces(
-                    img_path=temp_image_path,
-                    detector_backend='mtcnn',
-                    enforce_detection=False,
-                    align=False
-                )
-            except Exception as e2:
-                logger.error(f"Error in fallback face extraction: {str(e2)}")
-                # Clean up and return error
-                if os.path.exists(temp_image_path):
-                    os.remove(temp_image_path)
-                return jsonify({'error': f'Could not detect face in image: {str(e2)}'}), 400
 
-        if not face_objs:
-            if os.path.exists(temp_image_path):
+            if not face_objs:
+                logger.warning("No face detected in the verification image")
                 os.remove(temp_image_path)
-            return jsonify({'error': 'No face detected in the image'}), 400
+                return jsonify({'error': 'No face detected in the image. Please try again with better lighting and positioning.'}), 400
 
-        # Check if multiple faces are detected with more lenient validation
-        if len(face_objs) > 1:
-            logger.warning(f"Multiple faces detected: {len(face_objs)}")
-            # Instead of failing, we'll just use the largest face
-            face_obj = max(face_objs, key=lambda x: x['facial_area']['w'] * x['facial_area']['h'])
-            logger.debug("Using largest face for verification")
-        else:
-            face_obj = face_objs[0]
+            # Check if multiple faces are detected
+            if len(face_objs) > 1:
+                logger.warning(f"Multiple faces ({len(face_objs)}) detected in the verification image. Using the largest one.")
+                # Find face with largest area
+                largest_face = max(face_objs, key=lambda x: 
+                    x['facial_area']['w'] * x['facial_area']['h'])
+                
+                face_obj = largest_face
+                
+                # Extract just that face to a new image
+                img = cv2.imread(temp_image_path)
+                x = face_obj['facial_area']['x']
+                y = face_obj['facial_area']['y']
+                w = face_obj['facial_area']['w']
+                h = face_obj['facial_area']['h']
+                
+                # Add some margin
+                margin = int(max(w, h) * 0.2)
+                x = max(0, x - margin)
+                y = max(0, y - margin)
+                w = min(img.shape[1] - x, w + 2 * margin)
+                h = min(img.shape[0] - y, h + 2 * margin)
+                
+                face_img = img[y:y+h, x:x+w]
+                cv2.imwrite(temp_image_path, face_img)
+            else:
+                face_obj = face_objs[0]
+            
+            # Check face size and position with more lenient parameters
+            face_area = face_obj['facial_area']
+            img = cv2.imread(temp_image_path)
+            height, width = img.shape[:2]
+            
+            # Calculate face size relative to image
+            face_width_ratio = face_area['w'] / width
+            
+            # Face should occupy at least 15% of the image width (more lenient)
+            if face_width_ratio < 0.15:
+                logger.warning(f"Face too small in verification image. Ratio: {face_width_ratio:.2f}")
+                os.remove(temp_image_path)
+                return jsonify({
+                    'error': 'Face is too small. Please move closer to the camera',
+                    'details': f'Face width ratio: {face_width_ratio:.2f}'
+                }), 400
+                
+        except Exception as detect_error:
+            logger.error(f"Error in face detection during verification: {str(detect_error)}")
+            # Continue anyway, as we'll try with simplified settings
+
+        logger.info("Generating face embedding for verification")
         
-        # Generate face embedding for verification (simpler model)
+        # Generate face embedding with CPU-friendly settings
         try:
-            logger.debug("Generating face embedding with Facenet")
             facenet_embedding = DeepFace.represent(
                 img_path=temp_image_path,
-                model_name='Facenet',  # Use simpler model
-                detector_backend='opencv',
-                enforce_detection=False,
-                align=True
+                model_name='Facenet',  # Use Facenet instead of Facenet512 for CPU
+                detector_backend='opencv',  # Use OpenCV instead of RetinaFace for CPU
+                enforce_detection=False,    # More lenient detection
+                align=True,
+                normalization='base'        # Simpler normalization for CPU
             )[0]['embedding']
-            logger.debug("Successfully generated face embedding")
             
-            # Don't try VGG-Face as a second model - it's too heavy
+            # We'll skip the VGG-Face model for CPU efficiency
             vgg_embedding = None
-        except Exception as e:
-            logger.error(f"Error generating face embedding: {str(e)}")
-            # Clean up and return error
-            if os.path.exists(temp_image_path):
-                os.remove(temp_image_path)
-            return jsonify({'error': f'Error processing face: {str(e)}'}), 500
+            
+        except Exception as embedding_error:
+            logger.error(f"Error generating verification embedding: {str(embedding_error)}")
+            
+            # Try with more relaxed settings as fallback
+            try:
+                logger.info("Trying verification with more relaxed settings")
+                facenet_embedding = DeepFace.represent(
+                    img_path=temp_image_path,
+                    model_name='Facenet',
+                    detector_backend='skip',  # Skip detection completely
+                    enforce_detection=False,
+                    align=False              # Skip alignment
+                )[0]['embedding']
+                vgg_embedding = None
+                
+            except Exception as fallback_error:
+                if os.path.exists(temp_image_path):
+                    os.remove(temp_image_path)
+                logger.error(f"Fallback verification also failed: {str(fallback_error)}")
+                return jsonify({'error': 'Unable to process your face for verification. Please try again with a clearer photo.'}), 400
 
         # Clean up temporary file
-        if os.path.exists(temp_image_path):
-            os.remove(temp_image_path)
-            logger.debug("Cleaned up temporary image file")
+        os.remove(temp_image_path)
+        logger.info("Face embedding generated for verification")
 
         # Compare with stored embeddings
         best_match = None
         best_facenet_distance = float('inf')
         best_vgg_distance = float('inf')
         
-        # Much stricter thresholds
-        facenet_threshold = 0.35  # Very strict threshold for cosine similarity
-        vgg_threshold = 0.40  # Threshold for VGG-Face if available
-
-        with open(CSV_FILE, 'r', newline='') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                stored_embedding = json.loads(row['face_embedding'])
-                
-                # Convert embeddings to numpy arrays
-                facenet_verify_array = np.array(facenet_embedding)
-                stored_array = np.array(stored_embedding)
-                
-                # Calculate cosine similarity for Facenet512
-                similarity = np.dot(facenet_verify_array, stored_array) / (np.linalg.norm(facenet_verify_array) * np.linalg.norm(stored_array))
-                facenet_distance = 1 - similarity  # Convert similarity to distance
-                
-                # Track best match
-                if facenet_distance < best_facenet_distance:
-                    best_facenet_distance = facenet_distance
-                    best_match = row
+        # Use more lenient thresholds for CPU-based models
+        facenet_threshold = 0.45  # More lenient threshold for cosine similarity
+        
+        logger.info("Comparing with stored embeddings")
+        try:
+            with open(CSV_FILE, 'r', newline='') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    stored_embedding = json.loads(row['face_embedding'])
                     
-                    # If we have VGG embeddings, check them too
-                    if vgg_embedding is not None:
-                        # We need to get the VGG embedding for the stored face as well
-                        # For simplicity, we'll just use the Facenet distance for now
-                        best_vgg_distance = facenet_distance
+                    # Convert embeddings to numpy arrays
+                    facenet_verify_array = np.array(facenet_embedding)
+                    stored_array = np.array(stored_embedding)
+                    
+                    # Calculate cosine similarity for Facenet
+                    similarity = np.dot(facenet_verify_array, stored_array) / (np.linalg.norm(facenet_verify_array) * np.linalg.norm(stored_array))
+                    facenet_distance = 1 - similarity  # Convert similarity to distance
+                    
+                    # Track best match
+                    if facenet_distance < best_facenet_distance:
+                        best_facenet_distance = facenet_distance
+                        best_match = row
+        except Exception as comparison_error:
+            logger.error(f"Error comparing face embeddings: {str(comparison_error)}")
+            return jsonify({'error': 'Error comparing face embeddings. Please try again.'}), 500
 
         logger.debug(f"Best Facenet distance: {best_facenet_distance}, Threshold: {facenet_threshold}")
-        if vgg_embedding is not None:
-            logger.debug(f"Best VGG distance: {best_vgg_distance}, Threshold: {vgg_threshold}")
         
-        # Check if BOTH models verified (if using VGG) or just Facenet is very confident
-        if best_match and (
-            best_facenet_distance < facenet_threshold and 
-            (vgg_embedding is None or best_vgg_distance < vgg_threshold)
-        ):
+        # Check if we have a match using Facenet only with a more lenient threshold
+        if best_match and best_facenet_distance < facenet_threshold:
+            logger.info(f"Face verification successful. Match found: {best_match['full_name']}")
             return jsonify({
                 'match': True,
                 'full_name': best_match['full_name'],
@@ -463,6 +539,7 @@ def verify_face():
                 'threshold': facenet_threshold
             })
         else:
+            logger.info("No matching face found in database")
             return jsonify({
                 'match': False, 
                 'message': 'No matching face found in database',
@@ -471,6 +548,8 @@ def verify_face():
             })
 
     except Exception as e:
+        if 'temp_verify.jpg' in locals() and os.path.exists(temp_image_path):
+            os.remove(temp_image_path)
         logger.error(f"Error in face verification: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
