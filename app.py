@@ -34,7 +34,7 @@ SCOPES = ['https://www.googleapis.com/auth/userinfo.profile',
           'openid']
 
 # OAuth2 configuration
-REDIRECT_URI = 'http://localhost:3000/oauth2callback'
+REDIRECT_URI = 'http://airpass.potiip.com/oauth2callback'
 
 # Ensure the data directory exists
 if not os.path.exists('data'):
