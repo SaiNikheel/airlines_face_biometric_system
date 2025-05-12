@@ -255,12 +255,32 @@ def get_face_embedding():
         with open(temp_image_path, 'wb') as f:
             f.write(image_bytes)
 
-        # Generate face embedding using DeepFace
+        # First, ensure a face is detected
+        try:
+            face_objs = DeepFace.extract_faces(
+                img_path=temp_image_path,
+                detector_backend='retinaface',
+                enforce_detection=True, # We still enforce detection here
+                align=True
+            )
+            if not face_objs:
+                 # Clean up temporary file before returning
+                os.remove(temp_image_path)
+                return jsonify({'error': 'No face detected in the image. Please try again.'}), 400
+                
+        except Exception as e:
+            # Clean up temporary file on detection error
+            os.remove(temp_image_path)
+            logger.error(f"Error during face detection for embedding: {str(e)}")
+            return jsonify({'error': 'Could not detect a face in the image. Please ensure your face is clearly visible.'}), 400
+
+        # Generate face embedding using DeepFace from the detected face area
+        # DeepFace.represent will also perform detection internally, but the prior check gives specific feedback
         embedding = DeepFace.represent(
-            img_path=temp_image_path,
+            img_path=temp_image_path, # Pass the image path
             model_name='Facenet512',
             detector_backend='retinaface',
-            enforce_detection=True,
+            enforce_detection=True, # Keep enforce_detection true here as well
             align=True
         )
 
