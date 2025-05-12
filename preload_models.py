@@ -4,8 +4,19 @@ Run this script during the build process before starting the application.
 """
 print("Preloading DeepFace models...")
 
+# Force TensorFlow to use CPU
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['TF_FORCE_CPU_ALLOW_GROWTH'] = 'true'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
+
 from deepface import DeepFace
 from deepface.commons import functions
+import tensorflow as tf
+
+# Verify CPU is being used
+print("TensorFlow devices:", tf.config.list_physical_devices())
+print("Using CPU only mode:", not tf.config.list_physical_devices('GPU'))
 
 # Force download of models during build
 print("Downloading face detection model...")
