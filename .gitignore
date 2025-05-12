@@ -3,3 +3,4 @@ client_secret.json
 venv/
 test_env/
 temp_verify.jpg
+flask_session/
