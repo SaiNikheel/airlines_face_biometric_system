@@ -12,7 +12,7 @@ services:
         cp -R /opt/render/.deepface/* ~/.deepface/
         echo "Copied model files from /opt/render/.deepface to ~/.deepface"
       fi
-    startCommand: gunicorn app:app --timeout 120 --workers 1 --config gunicorn.conf.py
+    startCommand: gunicorn app:app --timeout 240 --workers 1 --config gunicorn.conf.py
     plan: standard
     envVars:
       - key: PYTHON_VERSION
@@ -23,4 +23,12 @@ services:
         value: /opt/render/project/model_cache
       - key: MODEL_NAME
         value: GhostFaceNet
+      - key: TF_FORCE_GPU_ALLOW_GROWTH
+        value: "true"
+      - key: TF_CPP_MIN_LOG_LEVEL
+        value: "3"
+      - key: CUDA_VISIBLE_DEVICES
+        value: "-1"  # Force CPU only
+      - key: TF_KERAS_BACKEND
+        value: "tensorflow"
     healthCheckPath: / 

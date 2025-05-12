@@ -51,6 +51,7 @@ packaging==25.0
 pandas==1.5.3
 pillow==11.2.1
 protobuf==4.25.7
+psutil==5.9.8
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 Pygments==2.19.1
