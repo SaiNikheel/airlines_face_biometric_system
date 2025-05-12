@@ -34,7 +34,23 @@ SCOPES = ['https://www.googleapis.com/auth/userinfo.profile',
           'openid']
 
 # OAuth2 configuration
-REDIRECT_URI = 'http://airpass.potiip.com/oauth2callback'
+# Read REDIRECT_URI from client_secret.json dynamically
+try:
+    with open(CLIENT_SECRETS_FILE, 'r') as f:
+        client_secrets = json.load(f)
+        # Assuming the first redirect_uri in the list is the correct one
+        REDIRECT_URI = client_secrets.get('web', {}).get('redirect_uris', [''])[0]
+        if not REDIRECT_URI:
+            raise ValueError("redirect_uris not found or is empty in client_secret.json")
+except FileNotFoundError:
+    logger.error(f"Client secrets file not found at {CLIENT_SECRETS_FILE}")
+    REDIRECT_URI = '' # Set a default or handle error appropriately
+except json.JSONDecodeError:
+    logger.error(f"Error decoding JSON from {CLIENT_SECRETS_FILE}")
+    REDIRECT_URI = ''
+except Exception as e:
+    logger.error(f"Error reading redirect URI from {CLIENT_SECRETS_FILE}: {e}")
+    REDIRECT_URI = ''
 
 # Ensure the data directory exists
 if not os.path.exists('data'):
@@ -226,36 +242,86 @@ def verify():
 @app.route('/get_face_embedding', methods=['POST'])
 def get_face_embedding():
     try:
-        data = request.get_json()
-        if not data or 'image' not in data:
-            return jsonify({'error': 'No image data provided'}), 400
-
-        # Decode base64 image
-        image_data = data['image'].split(',')[1]
-        image_bytes = base64.b64decode(image_data)
+        print("Face embedding request received")
+        data = request.json
         
-        # Save temporary image file
-        temp_image_path = 'temp_face.jpg'
-        with open(temp_image_path, 'wb') as f:
-            f.write(image_bytes)
-
-        # Generate face embedding using DeepFace
-        embedding = DeepFace.represent(
-            img_path=temp_image_path,
-            model_name='Facenet512',
-            detector_backend='retinaface',
-            enforce_detection=True,
-            align=True
-        )
-
-        # Clean up temporary file
-        os.remove(temp_image_path)
-
-        return jsonify({'embedding': embedding[0]['embedding']})
-
+        if not data or 'image' not in data:
+            print("Error: Missing image data in request")
+            return jsonify({'error': 'Missing image data'}), 400
+            
+        image_data = data['image']
+        
+        # Check if the image is a base64 string
+        if not isinstance(image_data, str):
+            print("Error: Image data is not a string")
+            return jsonify({'error': 'Image data must be a base64 string'}), 400
+            
+        # Remove data URL prefix if present
+        if image_data.startswith('data:image'):
+            image_data = image_data.split(',')[1]
+            
+        # Check if the base64 string is valid
+        try:
+            decoded_image = base64.b64decode(image_data)
+        except Exception as e:
+            print(f"Error decoding base64 image: {str(e)}")
+            return jsonify({'error': f'Invalid base64 image: {str(e)}'}), 400
+            
+        # Save the image temporarily
+        temp_path = 'temp_image.jpg'
+        with open(temp_path, 'wb') as f:
+            f.write(decoded_image)
+            
+        print(f"Image saved temporarily at {temp_path}, size: {len(decoded_image)} bytes")
+        
+        try:
+            from deepface import DeepFace
+            
+            # Set a specific detector backend for consistency
+            detector_backend = "opencv"  # Faster and more reliable than retinaface
+            print(f"Extracting face using {detector_backend} detector")
+            
+            # Extract the face embedding
+            print("Generating face embedding...")
+            embedding_objs = DeepFace.represent(img_path=temp_path, 
+                                       model_name="Facenet", 
+                                       detector_backend=detector_backend,
+                                       enforce_detection=True)
+                                       
+            if not embedding_objs or len(embedding_objs) == 0:
+                print("Error: No face embedding generated")
+                return jsonify({'error': 'Failed to generate face embedding'}), 400
+                
+            # Get the first face embedding
+            embedding = embedding_objs[0]["embedding"]
+            
+            # Clean up the temporary file
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+                
+            print(f"Face embedding generated successfully, length: {len(embedding)}")
+            return jsonify({'embedding': embedding})
+            
+        except Exception as e:
+            print(f"Error generating face embedding: {str(e)}")
+            
+            # Provide more specific error messages
+            error_message = str(e)
+            if "enforce_detection=False" in error_message:
+                return jsonify({'error': 'No face detected in the image. Please ensure your face is clearly visible.'}), 400
+            elif "NotImplementedError" in error_message:
+                return jsonify({'error': 'Face detection backend not available. Please try again.'}), 500
+            else:
+                return jsonify({'error': f'Failed to generate face embedding: {error_message}'}), 500
+    
     except Exception as e:
-        logger.error(f"Error generating face embedding: {str(e)}")
+        print(f"Unexpected error in get_face_embedding: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    
+    finally:
+        # Always clean up the temporary file
+        if 'temp_path' in locals() and os.path.exists(temp_path):
+            os.remove(temp_path)
 
 @app.route('/verify_face', methods=['POST'])
 def verify_face():
@@ -395,20 +461,51 @@ def verify_face():
         logger.error(f"Error in face verification: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# Add this near the top of the file after imports but before app initialization
+# Update the preload_deepface_models function for better error handling
 def preload_deepface_models():
     """Preload DeepFace models to prevent timeouts during requests"""
     try:
         from deepface import DeepFace
         print("Pre-loading DeepFace models...")
-        # Force model download/loading at startup
-        DeepFace.build_model("Facenet")
+        
+        # Check if models are already downloaded
+        import os
+        home = os.path.expanduser("~")
+        deepface_home = os.environ.get("DEEPFACE_HOME", os.path.join(home, ".deepface"))
+        
+        if not os.path.exists(deepface_home):
+            print(f"DeepFace home directory not found at {deepface_home}")
+            os.makedirs(deepface_home, exist_ok=True)
+            
+        # Try to load the model with existing files first
+        try:
+            model = DeepFace.build_model("Facenet")
+            print("DeepFace Facenet model loaded successfully from cache")
+        except Exception as e:
+            print(f"Error loading cached model: {e}")
+            print("Attempting to download model...")
+            model = DeepFace.build_model("Facenet")
+            
+        # Force model loading for faster first request
+        detector_backend = "retinaface"
+        try:
+            print(f"Testing {detector_backend} detector...")
+            DeepFace.extract_faces(img_path="https://github.com/serengil/deepface/raw/master/tests/dataset/img1.jpg", 
+                                  detector_backend=detector_backend)
+            print(f"{detector_backend} detector loaded successfully")
+        except Exception as e:
+            print(f"Error with {detector_backend} detector: {e}")
+            print("Falling back to opencv detector")
+            
         print("DeepFace models preloaded successfully")
+        return True
     except Exception as e:
         print(f"Error preloading DeepFace models: {e}")
+        return False
 
-# Run preloading before app starts
-preload_deepface_models()
+# Run preloading before app starts but don't block if it fails
+preload_success = preload_deepface_models()
+print(f"Model preloading {'successful' if preload_success else 'failed'}")
 
 if __name__ == '__main__':
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Only for development

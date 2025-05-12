@@ -2,12 +2,22 @@ services:
   - type: web
     name: face-recognition-biometric
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --timeout 120 --workers 1
+    buildCommand: |
+      pip install -r requirements.txt
+      python download_models.py
+      mkdir -p ~/.deepface
+      mkdir -p model_cache
+      if [ -d "/opt/render/.deepface" ]; then
+        cp -R /opt/render/.deepface/* ~/.deepface/
+        echo "Copied model files from /opt/render/.deepface to ~/.deepface"
+      fi
+    startCommand: gunicorn app:app --timeout 120 --workers 1 --config gunicorn.conf.py
     plan: standard
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.22
+        value: 3.9.7
       - key: FLASK_ENV
         value: production
+      - key: DEEPFACE_HOME
+        value: /opt/render/project/model_cache
     healthCheckPath: / 
